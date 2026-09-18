@@ -1,0 +1,111 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.78in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,tabularx,array,microtype}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{0pt}
+\newcommand{\bpb}{\mathrm{BPB}}
+
+\title{A Scaled Causal Decoder with Exact Within-Window Memory}
+\author{DASE7506 Mini Project 1 --- Final Technical Report}
+\date{Protocol \texttt{7506-mp1-wt2-v2}; frozen test BPB 1.609155}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We develop a language model for the supplied WikiText-2 benchmark in three phases: small-model architecture and memory experiments, capacity scaling under a CPU inference budget, and post-training calibration. The final predictor combines a 10,596,160-parameter causal decoder with a parameter-free exact-match cache over the current scoring window and a validation-selected softmax temperature of 1.10. Its frozen full-test result is \textbf{1.609155 bits per byte (BPB)}, versus 2.101260 BPB for the supplied baseline. Recorded FP32 CPU scoring takes 19.471 s (1.33 times the same-host baseline test time), the checkpoint is 40.448 MiB, and reported peak RAM is below 4 GiB. A same-checkpoint two-by-two inference ablation shows that cache and calibration each improve validation BPB. The cache adds no trained parameters or neural matrix multiplication, although its CPU computation is nonzero.
+\end{abstract}
+
+\section{Benchmark and Experimental Controls}
+The fixed course protocol uses a train-fitted BPE vocabulary of 2,048 tokens and independent causal windows of 256 positions. Every next-token target except the first token of the split is scored once. With summed negative natural-log likelihood $L$ and full raw UTF-8 byte count $B$,
+\begin{equation}\label{eq:bpb}
+\bpb = \frac{L}{B\ln 2}.
+\end{equation}
+Validation contains 376,599 targets over 1,148,007 bytes; test contains 428,405 targets over 1,292,013 bytes. Architecture, cache, checkpoint, and temperature selection used validation. Complete-test scoring occurred only after freezing the final predictor.
+
+The resource limits are 64 MiB of uncompressed inference assets, 4 GiB peak evaluation RAM, and CPU scoring time no more than five times a comparable baseline. The public repository excludes raw course data. Reproduction requires the original \texttt{code/data/} bundle; \texttt{common.py} verifies its hashes.
+
+\section{Phase I: Micro-Scale Architecture and Memory}
+Iterations 1--11 studied models around 1.1 million parameters under a matched 1,200-step, 9,830,400-target training budget. The supplied 1,088,256-parameter baseline recorded 2.0710 validation BPB. Iteration 1 combined RoPE, RMSNorm, and SwiGLU in a 1,120,896-parameter decoder and reached 1.828568 BPB. Because all three changed, the comparison establishes a combined gain. Iteration 2 kept the seed and target count but substituted learned absolute positions: 2.006781 BPB with 1,153,664 parameters. The 0.178213 BPB RoPE advantage is specific to that small-model pair; the position table also adds parameters and changes initialization draws.
+
+Iterations 3--7 explored shared blocks and several cache forms. The decisive inference-only control reused the exact Iteration 1 weights: BPB changed from \textbf{1.828568} without memory to \textbf{1.753179} with the hierarchical cache, a 0.075389 improvement without retraining. Four-token and confidence-gated variants did not improve on it. Iterations 8--11 examined further small-model alternatives, including multi-query attention and a hybrid recurrent mixer. Detailed negative results and search costs appear in \texttt{EXPERIMENT.md}.
+
+\subsection{Exact-match causal cache}
+At query position $t$, source positions satisfy $j<t$ and match the longest available suffix: trigram, then bigram, then unigram. Each selected source votes for its observed successor $x_{j+1}$ with recency weight
+\begin{equation}
+w(t,j)=\exp\!\left(-\frac{t-j}{512}\right).
+\end{equation}
+For selected source set $M_t$, the normalized cache distribution is
+\begin{equation}\label{eq:cache}
+q_t(v)=\frac{\sum_{j\in M_t}w(t,j)\,\mathbf{1}\{x_{j+1}=v\}}{\sum_{j\in M_t}w(t,j)}.
+\end{equation}
+The mixture share $\alpha_t$ is 0.60, 0.35, or 0.10 for trigram, bigram, or unigram matches, and zero without a match. Because $j<t$ implies $j+1\le t$, every voted successor is in the observed prefix. Cache state is local to a call and cannot cross independent scoring windows. The cache has zero trainable parameters and adds no neural matrix multiplication, but comparisons, exponentials, accumulation, and normalization consume CPU work. Five contract tests check causality, normalization, example independence, state reset, and gradients.
+
+\section{Phase II: Capacity Scaling and the CPU Bottleneck}
+Iteration 12 scaled to eight 320-wide blocks while retaining SwiGLU and RoPE. Its roughly 13.8-million-parameter model reached 1.592116 validation BPB at step 2,000, but that intermediate state was not checkpointed. The saved step-3,000 checkpoint scored 1.622825 BPB and took 39.165 s on four threads or 25.182 s on 32 threads for validation, exceeding the corresponding five-times-baseline comparisons.
+
+Iteration 13 made an \emph{architectural diet}: a two-linear-layer $4\times$ GELU MLP replaced SwiGLU, and learned absolute positions replaced RoPE. The final decoder has eight unshared causal-attention blocks, width 320, ten heads of dimension 32, MLP width 1,280, RMSNorm, tied token/output embeddings, and \textbf{10,596,160 parameters}. On the same 32-thread validation setting, the earlier saved candidate took 25.182 s and the final calibrated predictor took 16.948 s, a 32.7\% lower recorded time. The final test took 19.471 s. Comparing 39.165-second validation directly with 19.471-second test time would mix threads and splits. MLP, positions, parameter count, and thread policy changed together; no individual operation was isolated as the sole bottleneck. The earlier RoPE tables were precomputed at model construction, not recomputed for every token.
+
+The final model trained from random initialization for 2,400 updates, batch size 32, seed 17, processing 19,660,800 training targets. AdamW used weight decay 0.1, a 100-step warmup, peak learning rate $10^{-3}$, minimum $10^{-4}$, and cosine horizon 3,600 steps. Training took 2,642.67 s excluding 214.38 s of scheduled validation; the end-to-end process took 2,884.48 s on the recorded 32-thread CPU host. No earlier checkpoint or pretrained weight was inherited. Before calibration, the cache-enabled checkpoint scored 1.601842 validation BPB.
+
+\section{Phase III: Post-Training Calibration}
+With weights and cache fixed, backbone logits $z_t$ are divided by temperature $T$ before interpolation:
+\begin{equation}\label{eq:mix}
+p_t(v)=(1-\alpha_t)\,\operatorname{softmax}(z_t/T)_v+\alpha_t q_t(v).
+\end{equation}
+Validation trials at $T=0.95,1.05,1.10,1.12,1.15,1.20$ yielded BPB $1.612972,1.595878,1.594317,1.594778,1.596517,1.601936$, respectively. We froze \textbf{$T=1.10$} before full-test evaluation. This calibration changes no trained weights, cache matches, or scoring protocol.
+
+\subsection{Same-checkpoint inference-only ablation}
+The \texttt{code/ablate\_final.py} script loads the unchanged final checkpoint and uses the official \texttt{evaluate.score} routine on full validation. Cache-off variants bind the neural-only softmax in memory; only temperature changes otherwise. No variant retrains or uses test text.
+\begin{table}[h]
+\centering\small
+\caption{Final Iteration 13 checkpoint, full-validation two-by-two ablation. Lower BPB is better.}
+\begin{tabular}{lccc}
+\toprule
+Variant & Cache & $T$ & Validation BPB \\
+\midrule
+Neural decoder & off & 1.00 & 1.643535445 \\
+Neural + calibration & off & 1.10 & 1.635770970 \\
+Neural + exact cache & on & 1.00 & 1.601842055 \\
+\textbf{Full predictor} & \textbf{on} & \textbf{1.10} & \textbf{1.594316786} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At $T=1.00$, cache alone improves BPB by 0.041693390. With cache off, calibration alone improves it by 0.007764475. Together they gain 0.049218659 BPB over the uncalibrated neural model; calibration adds 0.007525269 with cache on. The BPB interaction is approximately 0.000239206, so the gains are nearly, but not exactly, additive. The ablation JSON records target counts, hashes, and timings. Its later cache-on passes took about 27.7 s on the host, slower than the frozen 16.948 s validation and 19.471 s test audits. Timing is sensitive to host load and run context; these validation-only passes do not replace the official test audit.
+
+\section{Frozen Result and Resource Audit}
+\begin{table}[h]
+\centering\small
+\caption{Complete-test score and recorded resource use.}
+\begin{tabular}{lccc}
+\toprule
+Measure & Baseline test & Final test & Limit \\
+\midrule
+BPB & 2.1012604 & \textbf{1.6091548} & minimize \\
+FP32 CPU time & 14.6435 s & \textbf{19.4713 s (1.33$\times$)} & $\le 5\times$ baseline \\
+Checkpoint & --- & \textbf{40.448 MiB} & $\le 64$ MiB assets \\
+Peak RAM & --- & \textbf{$<4$ GiB reported} & $\le 4$ GiB \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The full-test gain is 0.492106 BPB, or 23.42\% relative. The test record is \texttt{code/runs/iter\_13/test\_cpu\_fp32.json}. A separate roughly 200-ms-sampled full-validation run observed 1.5139 GiB peak evaluator process-tree working set. The test JSON lacks a peak-RAM field, so no exact test peak is asserted, and sampling may miss brief spikes. A same-host 32-thread validation pass took 16.948 s against a 3.585 s baseline (4.73$\times$); a repeat took 17.733 s (4.95$\times$), indicating a narrow validation timing margin. Cross-host timing needs fresh measurement.
+
+The final checkpoint SHA-256 is \texttt{aa653489ff62d0101589027a915ed6a815e68d1d3c3b0d0a4bf2bda4e94db9ab}; the matching predictor-source SHA-256 is \texttt{ac10afb46a56df4ba787f5fc05379dd5b9effd4efce904e5781cc62176a67c12}. The repository README gives exact installation and evaluation instructions.
+
+\section{Limitations, Attribution, and Disclosure}
+The cache performs quadratic comparisons within fixed 256-token windows. The architectural diet is a grouped intervention, not a per-layer profile. Validation guided 13 iterations and a temperature sweep, so its final score has selection bias; the full test result followed method freeze. CPU timing and RAM estimates depend on host and measurement method. No external training text, pretrained weights, cached test answers, or cross-window state were used.
+
+WikiText-2 was introduced by Merity et al.\ \cite{merity} and contains text by Wikipedia contributors. Upstream notices identify CC BY-SA 3.0 and GNU FDL obligations; raw data are excluded from the public repository. Substantive AI assistance contributed implementation, experiments, audits, analysis, and report drafting. The submitter is responsible for reviewing the code and claims.
+
+\begin{thebibliography}{9}
+\bibitem{merity} S. Merity, C. Xiong, J. Bradbury, and R. Socher, ``Pointer Sentinel Mixture Models,'' 2016. \url{https://arxiv.org/abs/1609.07843}.
+\bibitem{rmsnorm} B. Zhang and R. Sennrich, ``Root Mean Square Layer Normalization,'' 2019. \url{https://arxiv.org/abs/1910.07467}.
+\bibitem{gelu} D. Hendrycks and K. Gimpel, ``Gaussian Error Linear Units,'' 2016. \url{https://arxiv.org/abs/1606.08415}.
+\bibitem{roformer} J. Su et al., ``RoFormer: Enhanced Transformer with Rotary Position Embedding,'' 2021. \url{https://arxiv.org/abs/2104.09864}.
+\end{thebibliography}
+\end{document}

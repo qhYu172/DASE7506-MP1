@@ -13,6 +13,9 @@
 !/.gitattributes
 !/README.md
 !/REPORT.md
+!/REPORT.tex
+!/REPORT.pdf
+!/build_report_pdf.py
 !/EXPERIMENT.md
 !/requirements.txt
 !/code/
@@ -23,6 +26,7 @@
 !/code/common.py
 !/code/model.py
 !/code/student_ablate_rope.py
+!/code/ablate_final.py
 !/code/requirements.txt
 !/code/configs/
 /code/configs/*

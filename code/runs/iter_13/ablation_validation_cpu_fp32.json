@@ -1,0 +1,51 @@
+{
+  "protocol": "7506-mp1-wt2-v2",
+  "split": "validation",
+  "precision": "fp32",
+  "checkpoint_sha256": "aa653489ff62d0101589027a915ed6a815e68d1d3c3b0d0a4bf2bda4e94db9ab",
+  "implementation_sha256": "ac10afb46a56df4ba787f5fc05379dd5b9effd4efce904e5781cc62176a67c12",
+  "ablation_script_sha256": "87092fc3a490fd33e0dc034469df3e5a72a26875cf9fbca43231e75fec6bb1fe",
+  "threads_requested": 32,
+  "variants": {
+    "base_neural_t1": {
+      "cache": false,
+      "temperature": 1.0,
+      "bpb": 1.6435354449458177,
+      "token_ppl": 32.22430974415653,
+      "nll_nats": 1307823.3043507978,
+      "targets": 376599,
+      "utf8_bytes": 1148007,
+      "seconds": 15.345457200000965
+    },
+    "neural_t1_10": {
+      "cache": false,
+      "temperature": 1.1,
+      "bpb": 1.6357709698968528,
+      "token_ppl": 31.6999505252085,
+      "nll_nats": 1301644.8179382815,
+      "targets": 376599,
+      "utf8_bytes": 1148007,
+      "seconds": 17.36634480000066
+    },
+    "cache_t1": {
+      "cache": true,
+      "temperature": 1.0,
+      "bpb": 1.6018420546836794,
+      "token_ppl": 29.506918233611586,
+      "nll_nats": 1274646.297070608,
+      "targets": 376599,
+      "utf8_bytes": 1148007,
+      "seconds": 27.86824489999708
+    },
+    "cache_t1_10": {
+      "cache": true,
+      "temperature": 1.1,
+      "bpb": 1.594316785653766,
+      "token_ppl": 29.041451629105197,
+      "nll_nats": 1268658.1559331017,
+      "targets": 376599,
+      "utf8_bytes": 1148007,
+      "seconds": 27.65058929999941
+    }
+  }
+}
