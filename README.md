@@ -1,41 +1,33 @@
 # DASE7506 Mini Project 1 — Final Language Model Submission
 
-**Frozen full-test result:** **1.6091548 bits per byte (BPB)**, with **19.471 seconds** of FP32 CPU scoring time. The matching [checkpoint](code/runs/iter_13/checkpoint.pt) is included in this repository, so evaluation does not require retraining. The three-page [academic report](REPORT.pdf) is also available as [Markdown](REPORT.md) and [LaTeX source](REPORT.tex); [EXPERIMENT.md](EXPERIMENT.md) records all 13 iterations.
+**Yu Qinghao · Student ID 3036483599**
 
-| Resource or result | Final submission | Limit / reference |
+The final Iteration 14 predictor achieves **1.4930947 test BPB** and **1.4750551 validation BPB**. The matching [checkpoint](code/runs/iter_14/checkpoint.pt) is included, so evaluation does not require retraining. See the [PDF report](REPORT.pdf), [Markdown report](REPORT.md), [LaTeX source](REPORT.tex), and complete [experiment log](EXPERIMENT.md).
+
+| Result or resource | Iteration 14 | Limit / reference |
 |---|---:|---:|
-| Full-test BPB | **1.6091548** | Baseline: 2.1012604 |
-| CPU scoring time on recorded test run | **19.471 s** | 5× the same-host baseline test time of 14.644 s = 73.218 s |
-| Peak evaluation RAM | **<4 GiB reported**; separate sampled validation peak: 1.514 GiB | 4 GiB |
-| Checkpoint size | **42,412,469 bytes (40.448 MiB)** | 64 MiB uncompressed assets |
-| Validation BPB | **1.5943168** | Used for selection, not the reported test score |
+| Full-test BPB | **1.4930947** | Iteration 13: 1.6091548 |
+| Validation BPB | **1.4750551** | Iteration 13: 1.5943168 |
+| FP32 CPU validation time | **29.492 s** | Same-host baseline: 6.799 s; ratio **4.34× ≤ 5×** |
+| FP32 CPU test time | **34.212 s** | Recorded complete-test run |
+| Peak evaluation RAM | **1.5508 GiB sampled** | ≤4 GiB |
+| Checkpoint size | **45,031,925 bytes (42.946 MiB)** | ≤64 MiB |
 
-Scoring time depends on CPU and workload. The final predictor requests up to 32 PyTorch CPU threads on the recorded 32-logical-CPU host. The test JSON does not itself include a peak-RAM field; the validation RAM figure is a sampled process-tree working-set estimate.
+CPU time varies with the host and system load. The compliance ratio above uses validation runs measured on the same host with 32 PyTorch threads. The roughly 200 ms RAM sampler can miss a shorter spike.
 
-## Method in brief
+## Final method
 
-1. **Scale within the asset budget.** The decoder has 10,596,160 parameters: eight attention blocks, width 320, ten heads, a 1,280-unit MLP, RMSNorm, and tied token/output embeddings. It was trained from scratch for 2,400 steps with seed 17.
-2. **Discrete exact-match causal cache.** At each position, the predictor searches preceding positions for the longest available matching trigram, bigram, or unigram, weights their already-observed successors by `exp(-(t-j)/512)`, and mixes this distribution with the decoder. All matches obey `j < t`, and cache state is local to each independent call. This adds no learned parameters or neural matrix multiplications, although matching and accumulation do require CPU work.
-3. **Post-training temperature calibration.** Validation-only selection fixed the decoder softmax temperature at **1.10** before the final test evaluation. The cache rules and trained weights did not change.
+The inference model keeps the efficient Iteration 13 architecture: eight causal attention blocks, width 320, ten heads, 4× GELU MLPs, learned absolute positions, RMSNorm, and tied embeddings. It has **10,596,160 parameters**.
 
-An **architectural diet** replaced the earlier SwiGLU MLP with a two-linear-layer GELU MLP and RoPE with learned absolute positions. The earlier candidate needed 39.165 s for a four-thread validation pass and failed its CPU gate. Under a matched 32-thread validation setting, the earlier model took 25.182 s and the final predictor took 16.948 s. The final *test* run took 19.471 s; those validation and test times are different workloads and should not be treated as a controlled before/after speed measurement. The architecture, model size, and thread setting also changed, so the experiment cannot isolate the effect of either architectural substitution.
+Iteration 14 trained this model from scratch for **19,200 updates** with R-Drop. Training-only dropout 0.1 creates two stochastic views of each batch; the loss averages their cross-entropies and adds symmetric KL divergence with coefficient 1.0. Dropout is bypassed at evaluation, leaving the deterministic inference graph unchanged. AdamW uses a 100-step warmup and cosine decay from `0.001` to `0.0001` over all 19,200 steps.
 
-The final-checkpoint inference-only ablation uses the **same trained weights** for all variants:
+After training, [average_checkpoints.py](code/average_checkpoints.py) uniformly averages FP32 weights from steps 17,760, 18,240, 18,720, and 19,200. Averaging improves validation BPB from 1.4804027 for the raw final checkpoint to **1.4750551**.
 
-| Cache | Temperature | Full-validation BPB |
-|:---:|---:|---:|
-| Off | 1.00 | 1.643535445 |
-| Off | 1.10 | 1.635770970 |
-| On | 1.00 | 1.601842055 |
-| On | 1.10 | **1.594316786** |
+The predictor retains the call-local discrete exact-match cache. At each position it selects the longest available trigram, bigram, or unigram match from strictly earlier positions, weights observed successors by `exp(-(t-j)/512)`, and mixes the result with backbone probabilities. Its shares are 0.60, 0.35, and 0.10. A fixed validation-selected temperature of **1.10** is applied to backbone logits. The cache adds no learned parameters or neural matrix multiplications, but its comparisons and accumulation require real CPU work.
 
-Run `python ablate_final.py` from `code/` after installing the dataset to reproduce the [ablation record](code/runs/iter_13/ablation_validation_cpu_fp32.json). This uses the official validation scoring function and does not retrain or modify the frozen predictor. CPU timings can vary with host load; the later ablation session was slower than the frozen scoring audit.
+## Reproduce evaluation
 
-## Reproduce the frozen result
-
-Use Python 3.12 and the original, unmodified course dataset and tokenizer. The dataset is intentionally **not redistributed**. Obtain the course package and place its `data/` directory at `code/data/`, including its `manifest.json`, `tokenizer.json`, and the three WikiText split files. `common.py` checks the supplied data hashes. The complete test file is used only for final scoring; model and temperature selection used validation.
-
-From the repository root in Bash:
+Use Python 3.12 and the original course dataset and tokenizer. Raw data are intentionally excluded. Place the supplied course `data/` directory at `code/data/`; `common.py` verifies its manifest and hashes.
 
 ```bash
 python3.12 -m venv .venv
@@ -44,30 +36,30 @@ python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/
 python -m pip install -r requirements.txt
 cd code
 python -m unittest discover -s tests -v
-python evaluate.py --checkpoint runs/iter_13/checkpoint.pt --device cpu --precision fp32 --split validation --output runs/iter_13/reproduced_validation.json
-python evaluate.py --checkpoint runs/iter_13/checkpoint.pt --device cpu --precision fp32 --split test --output runs/iter_13/reproduced_test.json
+python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --split validation
+python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --split test
 ```
 
-The reported test output is [test_cpu_fp32.json](code/runs/iter_13/test_cpu_fp32.json). To retrain instead of using the supplied checkpoint (about 44 minutes of training excluding intermediate validation on the recorded host), run from `code/`:
+The recorded outputs are [validation_cpu_fp32_final.json](code/runs/iter_14/validation_cpu_fp32_final.json) and [test_cpu_fp32.json](code/runs/iter_14/test_cpu_fp32.json).
+
+## Reproduce training and averaging
+
+The recorded run used PyTorch 2.7.1+cu126 in BF16 on an RTX 4060 Laptop GPU and took 3,150 seconds excluding final validation. From `code/`:
 
 ```bash
-python train.py --implementation student --device cpu --seed 17 --eval-every 200 --threads 32 --run-dir runs/reproduction
+python train.py --implementation student --config configs/iter_14.json --device cuda --precision bf16 --threads 4 --seed 17 --steps 19200 --cosine-horizon 19200 --batch-size 32 --rdrop-alpha 1.0 --save-steps 17760,18240,18720,19200 --run-dir runs/iter_14_reproduction
+python average_checkpoints.py --run-dir runs/iter_14_reproduction
+python evaluate.py --checkpoint runs/iter_14_reproduction/checkpoint.pt --device cpu --precision fp32 --split validation
 ```
 
-The trainer defaults to 2,400 updates, batch size 32, a 100-step warmup, peak learning rate `0.001`, minimum `0.0001`, and a 3,600-step cosine horizon. It processes 19,660,800 training targets. Training from scratch may differ across hardware or software versions; the supplied checkpoint is the artifact for reproducing the official result.
+The run processed 157,286,400 training targets. Training from scratch may vary across hardware and software versions; the committed checkpoint is the final evaluation artifact.
 
-Verify the frozen artifacts from the repository root:
+Verify the frozen files:
 
 ```bash
-sha256sum code/runs/iter_13/checkpoint.pt code/student.py
+sha256sum code/runs/iter_14/checkpoint.pt code/student.py
 ```
 
-Expected SHA-256 values: checkpoint `aa653489ff62d0101589027a915ed6a815e68d1d3c3b0d0a4bf2bda4e94db9ab`; predictor source `ac10afb46a56df4ba787f5fc05379dd5b9effd4efce904e5781cc62176a67c12`.
+Expected SHA-256 values are `6703409e2705750f546d18c10465c0fbc26c268fa749c9d43900dc49192e155f` for the checkpoint and `5d2b65057a2a9a22e9009d575444cb3659074a163e1386e92d722a6c7e50d213` for the predictor source.
 
-To rebuild the report PDF, run `pdflatex -interaction=nonstopmode REPORT.tex` where a LaTeX engine is available. As a fallback, install `reportlab` and run `python build_report_pdf.py` from the repository root; the committed PDF was produced through this fallback and visually checked at three A4 pages.
-
-## Reproducibility and attribution
-
-The scorer uses protocol `7506-mp1-wt2-v2`, independent 256-token windows, the course BPE-2048 tokenizer, and full-split UTF-8 byte counts. The final test run covers 428,405 scored targets and 1,292,013 bytes. Source, training recipe, baseline implementation, tests, final configuration, checkpoint, and final-run JSON are committed here. Earlier checkpoints and raw data are excluded to keep the public bundle focused and to respect the dataset redistribution constraint.
-
-WikiText-2 was introduced by [Merity et al.](https://arxiv.org/abs/1609.07843); the underlying text is from Wikipedia contributors. Substantive AI assistance was used to implement experiments, run audits, analyze results, and draft this documentation. The author is responsible for checking the submitted code, figures, and claims.
+WikiText-2 was introduced by [Merity et al.](https://arxiv.org/abs/1609.07843); its text is from Wikipedia contributors. Substantive AI assistance contributed implementation, experiment execution, audits, analysis, and documentation. The submitter reviewed and is responsible for the final submission.

@@ -16,9 +16,10 @@ class RMSNorm(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(self, width, heads, hidden):
+    def __init__(self, width, heads, hidden, dropout=0.0):
         super().__init__()
         self.heads = heads
+        self.dropout = dropout
         self.norm1 = RMSNorm(width)
         self.norm2 = RMSNorm(width)
         self.qkv = nn.Linear(width, 3 * width)
@@ -32,9 +33,15 @@ class Block(nn.Module):
             batch, length, 3, self.heads, width // self.heads
         ).permute(2, 0, 3, 1, 4)
         attended = F.scaled_dot_product_attention(q, k, v, is_causal=True)
-        x = x + self.proj(attended.transpose(1, 2).reshape(batch, length, width))
+        attention_output = self.proj(attended.transpose(1, 2).reshape(batch, length, width))
+        if self.training and self.dropout:
+            attention_output = F.dropout(attention_output, p=self.dropout)
+        x = x + attention_output
         h = self.norm2(x)
-        return x + self.down(F.gelu(self.fc(h)))
+        mlp_output = self.down(F.gelu(self.fc(h)))
+        if self.training and self.dropout:
+            mlp_output = F.dropout(mlp_output, p=self.dropout)
+        return x + mlp_output
 
 
 class GPT(nn.Module):
@@ -46,11 +53,14 @@ class GPT(nn.Module):
         if width % heads:
             raise ValueError('Width must be divisible by attention heads.')
         hidden = 4 * width
+        dropout = float(config.get('dropout', 0.0))
+        if not 0.0 <= dropout < 1.0:
+            raise ValueError('Dropout must be in [0, 1).')
         self.temperature = 1.10
         self.token = nn.Embedding(config['vocab'], width)
         self.pos = nn.Embedding(self.context, width)
         self.blocks = nn.ModuleList(
-            [Block(width, heads, hidden) for _ in range(config['depth'])]
+            [Block(width, heads, hidden, dropout) for _ in range(config['depth'])]
         )
         self.norm = RMSNorm(width)
         self.head = nn.Linear(width, config['vocab'], bias=False)

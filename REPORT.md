@@ -1,83 +1,111 @@
-# A Scaled Causal Decoder with Exact Within-Window Memory
+# R-Drop Training and Checkpoint Averaging for a CPU-Bounded Causal Decoder
 
-**DASE7506 Mini Project 1 — Final technical report**
-**Protocol:** `7506-mp1-wt2-v2` · **Frozen test BPB:** 1.609155 · **Checkpoint:** Iteration 13
+**Yu Qinghao · Student ID 3036483599**
+
+**DASE7506 Mini Project 1 · Protocol `7506-mp1-wt2-v2`**
 
 ## Abstract
 
-We develop a language model for the supplied WikiText-2 benchmark in three phases: small-model architecture and memory experiments, capacity scaling under a CPU inference budget, and post-training calibration. The final predictor combines a 10,596,160-parameter causal decoder with a parameter-free exact-match cache over the current scoring window. A validation-selected softmax temperature of 1.10 completes the method. On the frozen full test split, it achieves **1.609155 bits per byte (BPB)**, versus **2.101260 BPB** for the supplied baseline. Recorded FP32 CPU scoring takes **19.471 s**, or **1.33×** the same-host baseline test time, and the **40.448 MiB** checkpoint fits the 64 MiB inference-asset limit. Reported peak RAM is below 4 GiB. A same-checkpoint 2×2 inference ablation shows that cache and calibration each improve validation BPB. The cache is free of trained parameters and added neural matrix multiplication, but it performs nonzero CPU computation.
+This work develops a compact language model under three hard inference limits: at most 64 MiB of assets, 4 GiB peak RAM, and five times the baseline CPU scoring time. The final predictor combines a 10,596,160-parameter causal Transformer, a call-local exact-match cache, temperature calibration, 19,200-step R-Drop training, and uniform averaging of four late checkpoints. It reaches **1.475055 validation BPB** and **1.493095 test BPB**, improving the prior Iteration 13 test result by 0.116060 BPB. On the paired validation audit it takes 29.492 s versus 6.799 s for the baseline (**4.34×**). The 42.946 MiB checkpoint and a sampled 1.5508 GiB process-tree working set also pass their gates. Checkpoint averaging contributes 0.005348 validation BPB over the raw final update. The proposed 1.30–1.40 range was not reached.
 
-## 1. Benchmark and experimental controls
+## 1. Task and controls
 
-The fixed course protocol uses a train-fitted BPE vocabulary of 2,048 tokens and independent causal windows of 256 positions. Every next-token target except the first token of the split is scored once. Let `L` be summed negative natural-log likelihood and `B` be the entire raw UTF-8 byte count. Then `BPB = L / (B ln 2)`. The validation split has 376,599 targets over 1,148,007 bytes; the test split has 428,405 targets over 1,292,013 bytes. All architecture, cache, checkpoint, and temperature choices used validation. We ran the complete test evaluator after freezing the final predictor.
+The fixed benchmark uses a train-fitted 2,048-token BPE vocabulary and independent causal windows of 256 tokens. Every target after the first token is scored once. For summed negative log likelihood \(L\) and the complete raw UTF-8 byte count \(B\),
 
-The course limits uncompressed inference assets to 64 MiB, peak evaluation RAM to 4 GiB, and CPU scoring time to at most five times the baseline on a comparable host. Training time and model size are indirect constraints through those inference gates. The source, tokenizer, evaluator, and data are unchanged. The public repository omits raw course data; the original supplied `code/data/` bundle is required for reproduction and is verified by `common.py`.
+\[
+\mathrm{BPB}=\frac{L}{B\ln 2}.
+\]
 
-## 2. Phase I — micro-scale architecture and memory (Iterations 1–11)
+Validation contains 376,599 targets and 1,148,007 bytes; test contains 428,405 targets and 1,292,013 bytes. Architecture and hyperparameter choices used validation. The final test evaluation was run after the Iteration 14 method and averaged weights were fixed. Raw course data are omitted from the repository.
 
-We first studied models around 1.1 million parameters under a matched 1,200-step, 9,830,400-target training budget. This small-scale setting made architectural comparisons and repeated inference tests tractable. The supplied 1,088,256-parameter baseline recorded 2.0710 validation BPB. Iteration 1 combined RoPE, RMSNorm, and SwiGLU in a 1,120,896-parameter decoder and reached 1.828568 BPB. Because all three changed together, that comparison establishes a combined gain, not a per-component cause. Iteration 2 kept the same seed and processed-target count but substituted learned absolute positions; it reached 2.006781 BPB with 1,153,664 parameters. The 0.178213 BPB RoPE advantage in this pair is specific to that small architecture; the learned position table also added parameters and changed initialization draws.
+## 2. Development path
 
-Iterations 3–7 explored shared blocks, position choices, and several cache forms. The important inference-only control is Iteration 5: the exact Iteration 1 weights scored **1.828568** without memory and **1.753179** with the hierarchical trigram/bigram/unigram cache. Thus the cache improved validation BPB by **0.075389** without retraining or changing parameter count. Four-token and confidence-gated variants did not surpass it. Iterations 8–11 tested further small-model alternatives, including multi-query attention and a hybrid recurrent mixer; the hybrid missed the CPU gate. Full variants, negative results, and search costs are in [EXPERIMENT.md](EXPERIMENT.md).
+### 2.1 Phase I: micro-scale architecture and memory
 
-### 2.1 Discrete exact-match causal cache
+Iterations 1–11 deliberately used models near 1.1M parameters and a matched 1,200-step budget to compare architecture and memory ideas cheaply. RoPE, RMSNorm, and SwiGLU jointly reduced validation BPB from the 2.0710 baseline to 1.828568. An inference-only control then applied the exact-match cache to unchanged weights and reduced BPB from 1.828568 to 1.753179. This 0.075389 gain established the cache independently of training.
 
-At query position `t`, the cache searches prior positions `j < t` for the longest available matching suffix: trigram, then bigram, then unigram. A selected source contributes its already-observed successor `x_{j+1}` with weight `w(t,j) = exp(-(t-j)/512)`. If `M_t` is the set of selected sources, its normalized vote distribution is
+### 2.2 Phase II: scaling and the architectural diet
 
-`q_t(v) = [Σ_{j∈M_t} w(t,j) 1{x_{j+1}=v}] / [Σ_{j∈M_t} w(t,j)]`.
+Iteration 12 scaled to eight 320-wide blocks while retaining RoPE and SwiGLU. Its saved checkpoint did not satisfy the paired CPU gate. Iteration 13 replaced SwiGLU with a two-linear-layer 4× GELU MLP and RoPE with learned absolute positions. The resulting inference backbone has eight unshared blocks, width 320, ten 32-dimensional heads, MLP width 1,280, RMSNorm, tied input/output embeddings, and 10,596,160 parameters. This grouped **architectural diet** reduced parameter count and CPU work; the experiment does not isolate the individual timing contribution of either replacement.
 
-The mixture share `α_t` is 0.60, 0.35, or 0.10 for trigram, bigram, or unigram matches, respectively, and zero with no match. Every source satisfies `j < t`, so `j+1 ≤ t`: the voted successor is inside the observed prefix. All tensors are local to the current call, with no cross-window state. The cache adds no trained parameters and no neural matrix multiplication. It is **not literally zero-FLOP**: equality comparisons, recency exponentials, accumulation, and normalization consume CPU time and memory. The provided contract suite verifies causal invariance, output normalization, independent examples, state reset, and finite training gradients.
+### 2.3 Phase III: cache and calibration
 
-## 3. Phase II — capacity scaling and the CPU bottleneck (Iterations 12–13)
+At position \(t\), the cache finds strictly earlier positions \(j<t\) with the longest available matching suffix: trigram, then bigram, then unigram. A match votes for its observed successor \(x_{j+1}\) with recency weight
 
-Iteration 12 scaled to eight 320-wide blocks while retaining SwiGLU and RoPE. The approximately 13.8-million-parameter model reached an intermediate **1.592116 validation BPB at step 2,000**, but that intermediate state was not checkpointed. Its saved step-3,000 checkpoint scored **1.622825 BPB** and required **39.165 s** for four-thread validation, or **25.182 s** with 32 threads; both exceeded the corresponding five-times-baseline comparisons. Its checkpoint fit the asset budget, but CPU time prevented promotion.
+\[
+w(t,j)=\exp(-(t-j)/512), \qquad
+q_t(v)=\frac{\sum_{j\in M_t}w(t,j)\mathbf{1}[x_{j+1}=v]}
+{\sum_{j\in M_t}w(t,j)}.
+\]
 
-Iteration 13 made an **architectural diet** for the scaled decoder: a two-linear-layer **4× GELU MLP** replaced SwiGLU, and learned absolute position embeddings replaced RoPE. The final architecture has eight unshared self-attention blocks, width 320, ten heads of dimension 32, MLP width 1,280, RMSNorm, tied input/output embeddings, and **10,596,160 parameters**. On the same 32-thread validation setting, the earlier saved candidate took **25.182 s** and the final calibrated predictor took **16.948 s**, a 32.7% lower recorded time. The final complete-test run took **19.471 s**. Comparing the earlier 39.165-second validation run directly with the final 19.471-second *test* run would mix thread settings and splits. The position mechanism, MLP, parameter count, and thread policy changed together, so these experiments do not isolate SwiGLU or RoPE as individually responsible for a specific number of seconds. Earlier RoPE sine/cosine tables were precomputed at model construction, not recalculated per token.
+The cache share is 0.60, 0.35, or 0.10 for trigram, bigram, or unigram matches. Because \(j+1\le t\), every voted token is already observed. State is recreated for every call, so information cannot cross examples or windows. The cache has no trainable parameters or neural matrix multiplications, although comparisons, exponentials, and accumulation require CPU work.
 
-The final model was trained **from random initialization** for 2,400 updates at batch size 32 and seed 17, processing **19,660,800 training targets**. AdamW used weight decay 0.1, 100 warmup steps, peak learning rate `10^-3`, minimum `10^-4`, and a cosine horizon of 3,600 steps beyond the stopping point. Recorded training time was **2,642.67 s** excluding 214.38 s of scheduled validation, and end-to-end process time was 2,884.48 s on the 32-thread CPU host. No earlier checkpoint or pretrained weights were inherited. The uncalibrated cache-enabled final checkpoint scored **1.601842 validation BPB**.
+Backbone logits use the validation-selected temperature \(T=1.10\):
 
-## 4. Phase III — post-training temperature calibration
+\[
+p_t(v)=(1-\alpha_t)\operatorname{softmax}(z_t/T)_v+\alpha_tq_t(v).
+\]
 
-With trained weights and cache fixed, we divided backbone logits by a temperature `T` before mixing with the cache:
+On the Iteration 13 checkpoint, the neural model at \(T=1.0\) scored 1.643535 validation BPB; calibration alone scored 1.635771, cache alone scored 1.601842, and both scored 1.594317. This is an inference-only 2×2 ablation with identical weights.
 
-`p_t(v) = (1-α_t) softmax(z_t/T)[v] + α_t q_t(v)`.
+## 3. Iteration 14: R-Drop and checkpoint averaging
 
-Validation-only trials at `T = 0.95, 1.05, 1.10, 1.12, 1.15, 1.20` yielded BPB `1.612972, 1.595878, 1.594317, 1.594778, 1.596517, 1.601936`, respectively. We froze **T = 1.10** before full-test evaluation. This changes no weights, cache matches, or scoring protocol.
+The final run started from random initialization and processed 157,286,400 training targets in 19,200 updates at batch size 32. AdamW used weight decay 0.1, 100 warmup updates, and cosine decay from \(10^{-3}\) to \(10^{-4}\) through update 19,200. Training took 3,150.09 s on an NVIDIA RTX 4060 Laptop GPU using BF16.
 
-### 4.1 Same-checkpoint inference-only ablation
+R-Drop requires stochastic views, so dropout 0.1 was added to attention and MLP residual branches during training only. For two forward distributions \(p_1,p_2\) and targets \(y\), the optimized loss was
 
-To separate cache and calibration effects in the final model, [ablate_final.py](code/ablate_final.py) loaded the **same frozen Iteration 13 checkpoint** for a 2×2 validation study. It used `evaluate.score`, changed only the in-memory temperature, and replaced `predict_log_probs` with the neural softmax when the cache was disabled. Neither training nor a test evaluation was performed for these variants.
+\[
+\mathcal L=\tfrac12[\mathrm{CE}(y,p_1)+\mathrm{CE}(y,p_2)]
++\tfrac12[\mathrm{KL}(p_1\Vert p_2)+\mathrm{KL}(p_2\Vert p_1)].
+\]
 
-| Final checkpoint variant | Cache | Temperature | Validation BPB | Gain versus neural T=1.0 |
-|---|:---:|---:|---:|---:|
-| Neural decoder | Off | 1.00 | 1.643535445 | — |
-| Decoder + calibration | Off | 1.10 | 1.635770970 | 0.007764475 |
-| Decoder + exact cache | On | 1.00 | 1.601842055 | 0.041693390 |
-| **Full predictor** | **On** | **1.10** | **1.594316786** | **0.049218659** |
+The KL coefficient is 1.0. Evaluation bypasses dropout, retaining a deterministic inference graph and the same parameter count. Checkpoints were saved at updates 17,760, 18,240, 18,720, and 19,200. `average_checkpoints.py` uniformly averages every floating-point parameter in FP32. The raw update-19,200 checkpoint scored 1.480403 validation BPB; averaging improved this to **1.475055**, a gain of 0.005348.
 
-With the cache enabled, calibration contributes **0.007525269 BPB**. The two gains are nearly additive; their interaction on BPB is about **0.000239206**. The [ablation JSON](code/runs/iter_13/ablation_validation_cpu_fp32.json) records full target counts, bytes, hashes, and per-run times. Its later cache-enabled passes took about 27.7 s on the host, materially slower than the frozen 16.948 s validation and 19.471 s test records. CPU timing depends on load and run context; the new ablation timings do not replace the official test audit.
+## 4. Results and resource audit
 
-## 5. Frozen result and resource audit
-
-| Measure | Baseline test | Final frozen test | Limit |
+| Measure | Iteration 13 | Iteration 14 final | Gate / reference |
 |---|---:|---:|---:|
-| BPB | 2.1012604 | **1.6091548** | Minimize |
-| FP32 CPU scoring time | 14.6435 s | **19.4713 s (1.33×)** | ≤5× baseline = 73.2176 s |
-| Uncompressed checkpoint | — | **42,412,469 bytes (40.448 MiB)** | ≤64 MiB inference assets |
-| Peak evaluation RAM | — | **<4 GiB reported** | ≤4 GiB |
+| Validation BPB | 1.594317 | **1.475055** | lower is better |
+| Test BPB | 1.609155 | **1.493095** | lower is better |
+| Parameters | 10,596,160 | **10,596,160** | — |
+| FP32 CPU validation time | — | **29.492 s** | baseline 6.799 s; **4.34× ≤ 5×** |
+| FP32 CPU test time | 19.471 s | **34.212 s** | complete test run |
+| Checkpoint | 40.448 MiB | **42.946 MiB** | ≤64 MiB |
+| Sampled evaluation RAM | — | **1.5508 GiB** | ≤4 GiB |
 
-The final test improvement over baseline is **0.492106 BPB**, or 23.42% relative. The result is recorded in [test_cpu_fp32.json](code/runs/iter_13/test_cpu_fp32.json). A separate approximately 200-ms-sampled full-validation pass observed **1.5139 GiB** peak evaluator process-tree working set. The test JSON has no peak-RAM field, so no precise test peak is asserted; sampling can also miss shorter spikes. On same-host 32-thread validation, the final predictor took 16.948 s against a 3.585 s baseline (4.73×); another final pass took 17.733 s (4.95×). This narrower validation margin makes cross-host timing verification important despite the comfortable recorded test ratio.
+The final test score improves on Iteration 13 by 0.116060 BPB. The validation timing comparison uses the same host, PyTorch build, thread count, and split. CPU timings varied with host load, so the ratio is more meaningful than comparison with an earlier absolute time. RAM was sampled from the evaluator process tree at roughly 200 ms intervals and may miss shorter spikes.
 
-The exact final checkpoint SHA-256 is `aa653489ff62d0101589027a915ed6a815e68d1d3c3b0d0a4bf2bda4e94db9ab`; the matching predictor source SHA-256 is `ac10afb46a56df4ba787f5fc05379dd5b9effd4efce904e5781cc62176a67c12`. The repository [README](README.md) gives installation, test, training, and direct evaluation commands.
+The final checkpoint SHA-256 is `6703409e2705750f546d18c10465c0fbc26c268fa749c9d43900dc49192e155f`; the predictor source SHA-256 is `5d2b65057a2a9a22e9009d575444cb3659074a163e1386e92d722a6c7e50d213`.
 
-## 6. Limitations, attribution, and disclosure
+## 5. Interpretation and limitations
 
-The cache performs quadratic comparisons within fixed 256-token windows. The architectural diet is a grouped intervention rather than a per-layer or per-operation profile. Validation informed 13 iterations and a temperature sweep, so its final score has selection bias; the full test result was obtained after the predictor was frozen. Timing and RAM estimates depend on the host and measurement method. No external training text, pretrained weights, cached test answers, or cross-window state were used.
+Long training plus R-Drop yields the largest improvement in the project, while late checkpoint averaging adds a smaller measured gain. Because training duration, dropout, and R-Drop changed together relative to Iteration 13, their individual effects are not identified. Only raw-update versus averaged-checkpoint performance is isolated within Iteration 14. The exact-match cache performs quadratic comparisons inside each fixed 256-token window. Validation guided repeated development and therefore has selection bias. No external training text, teacher model, pretrained weights, test-answer cache, or cross-window state was used.
 
-The WikiText-2 benchmark was introduced by Merity and colleagues and contains text by Wikipedia contributors. The upstream dataset notices identify CC BY-SA 3.0 and GNU FDL obligations; raw data are excluded from this public repository. Substantive AI assistance contributed implementation, experiment execution, audits, analysis, and report drafting. The submitter is responsible for reviewing the code and reported claims.
+The peer PDF named in the task was not present in the workspace, so its reported 1.456 BPB and ablation values could not be independently checked and are not used as measured results here. The achieved score is above 1.456 and above the proposed 1.30–1.40 target.
+
+## 6. Reproduction
+
+From `code/`, with the original course `data/` directory installed:
+
+```bash
+python -m unittest discover -s tests -v
+python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --threads 32 --split validation
+python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --threads 32 --split test
+```
+
+To reproduce training and averaging:
+
+```bash
+python train.py --implementation student --config configs/iter_14.json --device cuda --precision bf16 --threads 4 --seed 17 --steps 19200 --cosine-horizon 19200 --batch-size 32 --rdrop-alpha 1.0 --save-steps 17760,18240,18720,19200 --run-dir runs/iter_14_reproduction
+python average_checkpoints.py --run-dir runs/iter_14_reproduction
+```
 
 ## References
 
-1. Merity, S., Xiong, C., Bradbury, J., and Socher, R. (2016). [Pointer Sentinel Mixture Models](https://arxiv.org/abs/1609.07843).
-2. Zhang, B. and Sennrich, R. (2019). [Root Mean Square Layer Normalization](https://arxiv.org/abs/1910.07467).
-3. Hendrycks, D. and Gimpel, K. (2016). [Gaussian Error Linear Units](https://arxiv.org/abs/1606.08415).
-4. Su, J. et al. (2021). [RoFormer: Enhanced Transformer with Rotary Position Embedding](https://arxiv.org/abs/2104.09864).
+1. Merity, S., Xiong, C., Bradbury, J., & Socher, R. (2016). *Pointer Sentinel Mixture Models*. arXiv:1609.07843.
+2. Zhang, B., & Sennrich, R. (2019). *Root Mean Square Layer Normalization*. NeurIPS.
+3. Hendrycks, D., & Gimpel, K. (2016). *Gaussian Error Linear Units*. arXiv:1606.08415.
+4. Liang, X. et al. (2021). *R-Drop: Regularized Dropout for Neural Networks*. NeurIPS.
+5. Izmailov, P. et al. (2018). *Averaging Weights Leads to Wider Optima and Better Generalization*. UAI.
+
+WikiText-2 contains text from Wikipedia contributors. Raw data are excluded from the repository. Substantive AI assistance contributed implementation, experiment execution, audits, analysis, and drafting; the author reviewed the final materials.

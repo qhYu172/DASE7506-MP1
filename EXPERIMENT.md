@@ -291,3 +291,30 @@ After the submission was frozen, `code/ablate_final.py` loaded the unchanged Ite
 | Final combination | On | 1.10 | **1.594316786** | 27.651 s |
 
 At temperature 1.00, the cache alone improves BPB by 0.041693390. At cache-off, calibration alone improves it by 0.007764475. Together they improve the neural-only baseline by 0.049218659 BPB. The temperature gain conditional on the cache is 0.007525269. The approximately 0.000239206 BPB interaction shows the improvements are nearly additive on this metric, not exactly additive. Each variant scored 376,599 targets and 1,148,007 bytes. The cache-on timing in this later ablation session is materially higher than the frozen 16.948 s validation and 19.471 s test records; CPU timing is sensitive to machine load and the ablation script's run context. These new validation-only measurements do not change the frozen official test result or its recorded resource audit. The cache is parameter-free and adds no neural matrix multiplication, but its comparisons, exponential weighting, and scatter accumulation have nonzero computational cost.
+
+## Iteration 14 — 19,200-step R-Drop training and checkpoint averaging
+
+Hypothesis: extending the Iteration 13 backbone to 19,200 updates, adding R-Drop consistency regularization, and averaging four late checkpoints will improve generalization while preserving its inference architecture and exact-match cache. The model retains eight 320-wide blocks, ten 32-dimensional heads, 4× GELU MLPs, learned absolute positions, RMSNorm, tied embeddings, the trigram/bigram/unigram cache, and inference temperature 1.10. Iteration 14 adds dropout 0.1 only on the attention and MLP residual branches during training. The parameter count remains **10,596,160**; evaluation bypasses dropout and executes the deterministic Iteration 13 inference graph.
+
+For each batch, training evaluates two independently dropped-out passes. If `p1` and `p2` are their token distributions, the objective is `0.5 CE(p1,y) + 0.5 CE(p2,y) + 0.5 KL(p1||p2) + 0.5 KL(p2||p1)`, with R-Drop coefficient 1.0. A preflight check confirmed different logits and positive symmetric KL; a two-step full-batch CUDA smoke run used 3.194 GB peak allocated GPU memory. All five unchanged contract tests passed after the inference fast-path edit.
+
+Training command from `code/`: `.venv_cuda\Scripts\python.exe train.py --implementation student --config configs\iter_14.json --device cuda --precision bf16 --threads 4 --seed 17 --steps 19200 --cosine-horizon 19200 --batch-size 32 --rdrop-alpha 1.0 --save-steps 17760,18240,18720,19200 --run-dir runs\iter_14`. The run started from random initialization, processed **157,286,400 training targets**, and took **3,150.09 s** excluding final validation on an NVIDIA GeForce RTX 4060 Laptop GPU. AdamW used peak learning rate 0.001, weight decay 0.1, 100 warmup steps, and cosine decay to 0.0001 at step 19,200. Peak allocated/reserved GPU memory was 3.196/3.248 GB.
+
+The raw step-19,200 checkpoint scored **1.480402657 validation BPB**. `average_checkpoints.py` then uniformly averaged FP32 weights from steps 17,760, 18,240, 18,720, and 19,200. The resulting `runs/iter_14/checkpoint.pt` has SHA-256 `6703409e2705750f546d18c10465c0fbc26c268fa749c9d43900dc49192e155f`; the final predictor source SHA-256 is `5d2b65057a2a9a22e9009d575444cb3659074a163e1386e92d722a6c7e50d213`.
+
+| Measure | Iteration 13 | Iteration 14 raw step 19,200 | Iteration 14 SWA |
+|---|---:|---:|---:|
+| Parameters | 10,596,160 | 10,596,160 | 10,596,160 |
+| Training targets | 19,660,800 | 157,286,400 | 157,286,400 |
+| Validation BPB | 1.594316786 | 1.480402657 | **1.475055073** |
+| Test BPB | 1.609154786 | — | **1.493094744** |
+| Current-host validation CPU time | — | — | 29.492 s |
+| Current-host 32-thread baseline validation time | — | — | 6.799 s |
+| Validation CPU ratio | — | — | **4.34×** |
+| Test CPU time | 19.471 s (earlier host state) | — | **34.212 s** |
+| Checkpoint size | 40.448 MiB | 40.450 MiB | **42.946 MiB** |
+| Sampled peak test process-tree working set | — | — | **1.5508 GiB** |
+
+The average improves on the raw final checkpoint by **0.005348 BPB** and on Iteration 13 validation by **0.119262 BPB**. The frozen test score improves by **0.116060 BPB**. A paired current-host audit is necessary because the host ran both Iteration 13 and Iteration 14 more slowly than earlier audits; the corrected final checkpoint scored validation in 29.492 s while the same-host, 32-thread baseline took 6.799 s, giving **4.34×** and passing the hard 5× CPU limit. A roughly 200 ms process-tree sample during full-test scoring observed 1,665,200,128 bytes (1.5508 GiB), below 4 GiB. The averaged checkpoint is 45,031,925 bytes (42.946 MiB), below 64 MiB.
+
+Decision: **Promote Iteration 14 as the final submission candidate.** It materially improves both validation and test BPB while passing the paired CPU, sampled RAM, and asset gates. The result does not reach the proposed 1.30–1.40 range and does not exceed the peer score reported in the task context; no such claim is made. R-Drop and longer training changed together relative to Iteration 13, so their individual contributions are not isolated. The only isolated final-run comparison is raw step 19,200 versus four-checkpoint averaging. The test split was evaluated once after fixing R-Drop, snapshot selection, averaging, cache, and temperature.
