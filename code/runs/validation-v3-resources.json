@@ -1,0 +1,37 @@
+{
+  "split": "validation",
+  "fresh_process_seconds": [
+    1.0511606999998548,
+    0.3960329000001366
+  ],
+  "total_seconds": 1.4471935999999914,
+  "commands": [
+    [
+      "C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "predict.py",
+      "--method",
+      "submission.py",
+      "--checkpoint",
+      "runs\\model_bundle_v3",
+      "--split",
+      "validation",
+      "--output",
+      "runs/validation-v3-predictions.json"
+    ],
+    [
+      "C:\\Users\\Lenovo\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "score_predictions.py",
+      "--split",
+      "validation",
+      "--predictions",
+      "runs/validation-v3-predictions.json",
+      "--output",
+      "runs/validation-v3-score.json"
+    ]
+  ],
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "local_cpu": "Intel Core i9-14900HX",
+  "threads": 4,
+  "asset_bytes": 28205
+}

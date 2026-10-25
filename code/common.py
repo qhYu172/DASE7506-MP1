@@ -1,80 +1,100 @@
+"""Fixed bank IO, numeric parser and grading; no model or training algorithm."""
+from fractions import Fraction
 import hashlib
-import importlib
 import json
 from pathlib import Path
-import torch
-from tokenizers import Tokenizer
+import re
 
-ROOT = Path(__file__).resolve().parent
-PROTOCOL = '7506-mp1-wt2-v2'
+import numpy as np
 
-
-def sha(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+DATA = Path(__file__).resolve().parent/'data'
+PROTOCOL = 'dase7506-mp2-open-hard-verifier-v5'
+SPLITS = ('train', 'validation', 'test', 'audit')
 
 
-def load_data():
-    manifest = json.loads((ROOT / 'data/manifest.json').read_text())
-    for name, expected in manifest['sha256'].items():
-        if sha(ROOT / 'data' / name) != expected:
-            raise ValueError(f'Changed benchmark file: {name}')
-    tokenizer = Tokenizer.from_file(str(ROOT / 'data/tokenizer.json'))
-    data = {}
-    for split in ('train', 'validation', 'test'):
-        raw = (ROOT / 'data' / f'wikitext_{split}.txt').read_bytes()
-        ids = tokenizer.encode(raw.decode('utf-8')).ids
-        data[split] = (torch.tensor(ids, dtype=torch.long), len(raw))
-    return data
+def read_jsonl(path):
+    with Path(path).open(encoding='utf-8') as f:
+        return [json.loads(line) for line in f if line.strip()]
 
 
-def setup(device_name, precision, threads):
-    torch.set_num_threads(threads)
-    torch.set_float32_matmul_precision('highest')
-    device = torch.device(device_name)
-    if device.type not in ('cpu', 'cuda'):
-        raise ValueError('The measured reference devices are CPU and CUDA.')
-    if device.type == 'cuda':
-        if not torch.cuda.is_available():
-            raise ValueError('CUDA is unavailable; use --device cpu.')
-        if device.index is None:
-            device = torch.device('cuda', torch.cuda.current_device())
-        torch.cuda.set_per_process_memory_fraction(min(1., 20e9 / torch.cuda.get_device_properties(device).total_memory), device)
-        torch.cuda.reset_peak_memory_stats(device)
-    if precision == 'auto':
-        precision = 'bf16' if device.type == 'cuda' and torch.cuda.is_bf16_supported() else 'fp32'
-    if precision == 'bf16' and (device.type != 'cuda' or not torch.cuda.is_bf16_supported()):
-        raise ValueError('Use fp32 on CPU or CUDA devices without BF16 support.')
-    return device, precision
+def parse_answer(text):
+    text = str(text)
+    tail = text.rsplit('####', 1)[1] if '####' in text else None
+    if tail is None:
+        boxed = re.findall(r'\\boxed\{([^{}]+)\}', text)
+        tail = boxed[-1] if boxed else ''
+    match = re.search(r'[-+]?\d[\d,]*(?:\.\d+)?(?:/\d+)?', tail)
+    if not match:
+        return None
+    try:
+        return str(Fraction(match.group().replace(',', '')))
+    except (ValueError, ZeroDivisionError):
+        return None
 
 
-def autocast(device, precision):
-    return torch.autocast(device_type=device.type, dtype=torch.bfloat16, enabled=precision == 'bf16')
+def check_data(data_dir=DATA, splits=None, inputs_only=False):
+    data = Path(data_dir)
+    manifest = json.loads((data/'manifest.json').read_text())
+    if manifest['protocol'] != PROTOCOL:
+        raise ValueError('Wrong bank protocol')
+    chosen = list(manifest['splits']) if splits is None else ([splits] if isinstance(splits, str) else list(splits))
+    for split in chosen:
+        if split not in SPLITS or split not in manifest['splits']:
+            raise ValueError('Unavailable split')
+        files = [f'candidates/gsm8k_{split}.jsonl', f'candidates/gsm8k_{split}.npz']
+        if not inputs_only:
+            files.append(f'gsm8k_{split}.jsonl')
+        for name in files:
+            digest = hashlib.sha256((data/name).read_bytes()).hexdigest()
+            if digest != manifest['sha256'].get(name):
+                raise ValueError(f'Data hash mismatch: {name}')
+    return manifest
 
 
-def make_model(implementation, config, device):
-    module = importlib.import_module(implementation)
-    model = module.build_model(config).to(device)
-    if model.context != 256 or config['vocab'] != 2048:
-        raise ValueError('The main board fixes context=256 and vocab=2048.')
-    return model, sha(module.__file__)
+def load_bank(split, data_dir=DATA):
+    data = Path(data_dir)
+    manifest = json.loads((data/'manifest.json').read_text())
+    if split not in SPLITS or manifest['protocol'] != PROTOCOL:
+        raise ValueError('Unknown split or wrong protocol')
+    bank = read_jsonl(data/'candidates'/f'gsm8k_{split}.jsonl')
+    if len(bank) != manifest['splits'][split] or len({row['id'] for row in bank}) != len(bank):
+        raise ValueError('Incomplete bank or repeated IDs')
+    if any([c['index'] for c in row['candidates']] != [0,1,2,3] for row in bank):
+        raise ValueError('Expected four ordered candidates')
+    return bank
 
 
-def windows(tokens, batch_size=32, context=256):
-    for start in range(0, len(tokens) - 1, context * batch_size):
-        chunks = [tokens[i:min(i + context + 1, len(tokens))] for i in
-                  range(start, min(start + context * batch_size, len(tokens)-1), context)]
-        x = torch.zeros(len(chunks), context, dtype=torch.long)
-        y = torch.full_like(x, -100)
-        for row, chunk in enumerate(chunks):
-            x[row, :len(chunk)-1] = chunk[:-1]
-            y[row, :len(chunk)-1] = chunk[1:]
-        yield x, y
+def load_inputs(split, data_dir=DATA):
+    check_data(data_dir, (split,), inputs_only=True)
+    bank = load_bank(split, data_dir)
+    with np.load(Path(data_dir)/'candidates'/f'gsm8k_{split}.npz', allow_pickle=False) as f:
+        arrays = {'embeddings': f['embeddings'].copy()}
+    n = len(bank)
+    if arrays['embeddings'].shape != (4*n,1024):
+        raise ValueError('Frozen feature shapes differ from the contract')
+    arrays = {key: value.reshape(n,4,*value.shape[1:]) for key,value in arrays.items()}
+    if any(not np.isfinite(arrays[k]).all() for k in ('embeddings',)):
+        raise ValueError('Nonfinite features')
+    return bank, arrays
 
 
-def device_metrics(device):
-    return {
-        'device': str(device),
-        'device_name': torch.cuda.get_device_name(device) if device.type == 'cuda' else 'CPU',
-        'peak_allocated_gb': torch.cuda.max_memory_allocated(device)/1e9 if device.type == 'cuda' else 0.,
-        'peak_reserved_gb': torch.cuda.max_memory_reserved(device)/1e9 if device.type == 'cuda' else 0.,
-    }
+def validate_choices(bank, ids, choices):
+    if ids != [row['id'] for row in bank] or len(choices) != len(bank):
+        raise ValueError('Exactly one choice per question in bank order is required')
+    if any(type(i) is not int or not 0 <= i < 4 for i in choices):
+        raise ValueError('Choices must be integer candidate indices 0, 1, 2, or 3')
+
+
+def score_choices(split, ids, choices, data_dir=DATA):
+    bank = load_bank(split, data_dir)
+    validate_choices(bank, ids, choices)
+    gold = read_jsonl(Path(data_dir)/f'gsm8k_{split}.jsonl')
+    if len(gold) != len(bank):
+        raise ValueError('Incomplete scoring references')
+    correct = 0
+    for q,row,i in zip(gold, bank, choices):
+        if q['id'] != row['id'] or q['question'] != row['question']:
+            raise ValueError('Reference/bank alignment mismatch')
+        answer = parse_answer(row['candidates'][i]['text'])
+        correct += int(answer is not None and answer == parse_answer(q['answer']))
+    return {'correct': correct, 'n': len(bank), 'accuracy': 100*correct/len(bank)}

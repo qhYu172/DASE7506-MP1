@@ -1,65 +1,44 @@
-# DASE7506 Mini Project 1 — Final Language Model Submission
+# DASE7506 Mini-project 2: Selecting Reliable LLM Reasoning
 
-**Yu Qinghao · Student ID 3036483599**
+**Yu Qinghao — Student ID 3036843599**
 
-The final Iteration 14 predictor achieves **1.4930947 test BPB** and **1.4750551 validation BPB**. The matching [checkpoint](code/runs/iter_14/checkpoint.pt) is included, so evaluation does not require retraining. See the [PDF report](REPORT.pdf), [Markdown report](REPORT.md), [LaTeX source](REPORT.tex), and complete [experiment log](EXPERIMENT.md).
+Final method **v3**: numeric-answer-group pairwise ranking with training-only subset augmentation. Official complete-test accuracy: **83.5117773019272% (390/467)**. The supplied data, numeric parser and scorer are unchanged.
 
-| Result or resource | Iteration 14 | Limit / reference |
-|---|---:|---:|
-| Full-test BPB | **1.4930947** | Iteration 13: 1.6091548 |
-| Validation BPB | **1.4750551** | Iteration 13: 1.5943168 |
-| FP32 CPU validation time | **29.492 s** | Same-host baseline: 6.799 s; ratio **4.34× ≤ 5×** |
-| FP32 CPU test time | **34.212 s** | Recorded complete-test run |
-| Peak evaluation RAM | **1.5508 GiB sampled** | ≤4 GiB |
-| Checkpoint size | **45,031,925 bytes (42.946 MiB)** | ≤64 MiB |
+- [Report (3 pages)](output/pdf/MP2_report.pdf)
+- [Results, experiment history and exact commands](RESULTS.md)
+- [Public-method sources and independent adaptation disclosure](PUBLIC_METHODS.md)
+- [Frozen checkpoint](code/runs/model_bundle_v3/)
+- [Official test score](code/runs/test-v3-score.json)
+- [Source/checkpoint freeze manifest](code/runs/v3-freeze.json)
 
-CPU time varies with the host and system load. The compliance ratio above uses validation runs measured on the same host with 32 PyTorch threads. The roughly 200 ms RAM sampler can miss a shorter spike.
+## Reproduce without retraining
 
-## Final method
+Use Python 3.12. From the repository root:
 
-The inference model keeps the efficient Iteration 13 architecture: eight causal attention blocks, width 320, ten heads, 4× GELU MLPs, learned absolute positions, RMSNorm, and tied embeddings. It has **10,596,160 parameters**.
-
-Iteration 14 trained this model from scratch for **19,200 updates** with R-Drop. Training-only dropout 0.1 creates two stochastic views of each batch; the loss averages their cross-entropies and adds symmetric KL divergence with coefficient 1.0. Dropout is bypassed at evaluation, leaving the deterministic inference graph unchanged. AdamW uses a 100-step warmup and cosine decay from `0.001` to `0.0001` over all 19,200 steps.
-
-After training, [average_checkpoints.py](code/average_checkpoints.py) uniformly averages FP32 weights from steps 17,760, 18,240, 18,720, and 19,200. Averaging improves validation BPB from 1.4804027 for the raw final checkpoint to **1.4750551**.
-
-The predictor retains the call-local discrete exact-match cache. At each position it selects the longest available trigram, bigram, or unigram match from strictly earlier positions, weights observed successors by `exp(-(t-j)/512)`, and mixes the result with backbone probabilities. Its shares are 0.60, 0.35, and 0.10. A fixed validation-selected temperature of **1.10** is applied to backbone logits. The cache adds no learned parameters or neural matrix multiplications, but its comparisons and accumulation require real CPU work.
-
-## Reproduce evaluation
-
-Use Python 3.12 and the original course dataset and tokenizer. Raw data are intentionally excluded. Place the supplied course `data/` directory at `code/data/`; `common.py` verifies its manifest and hashes.
-
-```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -r requirements.txt
+```powershell
 cd code
-python -m unittest discover -s tests -v
-python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --split validation
-python evaluate.py --checkpoint runs/iter_14/checkpoint.pt --device cpu --precision fp32 --split test
+py -3.12 -m pip install -r requirements.txt
+py -3.12 fetch_data.py
+py -3.12 check_data.py
+py -3.12 evaluate_frozen.py --split validation
+py -3.12 evaluate_frozen.py --split test
 ```
 
-The recorded outputs are [validation_cpu_fp32_final.json](code/runs/iter_14/validation_cpu_fp32_final.json) and [test_cpu_fp32.json](code/runs/iter_14/test_cpu_fp32.json).
+On Linux/macOS, replace `py -3.12` with your Python 3.12 executable. The evaluation wrapper sets four numerical threads, verifies frozen hashes, and launches the official predictor and independent scorer as fresh processes. Expected test result: **390/467**. The checkpoint is included; no model download or retraining is needed. Final inference assets total **28,205 bytes**. Local fresh-process prediction plus scoring took **1.265 seconds** on an Intel Core i9-14900HX; the reference Xeon determines official runtime eligibility.
 
-## Reproduce training and averaging
+The GitHub edition omits the large original data arrays. `fetch_data.py` downloads only the official course data at commit `bb801f4f2e7629d270df765ab12c333b2dc616bb` and verifies every file against the supplied manifest. An existing complete local copy is verified and reused. Data license/attribution files are retained under `code/data/`. After data setup, evaluation works offline.
 
-The recorded run used PyTorch 2.7.1+cu126 in BF16 on an RTX 4060 Laptop GPU and took 3,150 seconds excluding final validation. From `code/`:
+## Reproduce training and comparisons
 
-```bash
-python train.py --implementation student --config configs/iter_14.json --device cuda --precision bf16 --threads 4 --seed 17 --steps 19200 --cosine-horizon 19200 --batch-size 32 --rdrop-alpha 1.0 --save-steps 17760,18240,18720,19200 --run-dir runs/iter_14_reproduction
-python average_checkpoints.py --run-dir runs/iter_14_reproduction
-python evaluate.py --checkpoint runs/iter_14_reproduction/checkpoint.pt --device cpu --precision fp32 --split validation
+```powershell
+cd code
+py -3.12 train_augmented_ranker.py
 ```
 
-The run processed 157,286,400 training targets. Training from scratch may vary across hardware and software versions; the committed checkpoint is the final evaluation artifact.
+This performs the final three-fold train-question CV search and fits the chosen model using train only. It writes `runs/augmented_ranker/`, leaving the frozen final checkpoint unchanged. Validation is measured for development; test is never opened by this training script. Use `--method answer_ranker.py --checkpoint runs/augmented_ranker` with the official predictor to evaluate the rebuilt checkpoint.
 
-Verify the frozen files:
+The earlier group-softmax comparison is in `train_answer_ranker.py`. Rebuild the historical v1/v2 models with `train.py` then `train_v2.py`, and run `select_fusion.py` for the reported negative fusion comparison. Historical v1/v2 learned assets are included in the full local project ZIP, but need not be included in the GitHub edition; their training code and score records are retained. Exploratory LightGBM trials use optional `requirements-experiments.txt`.
 
-```bash
-sha256sum code/runs/iter_14/checkpoint.pt code/student.py
-```
+## Provenance
 
-Expected SHA-256 values are `6703409e2705750f546d18c10465c0fbc26c268fa749c9d43900dc49192e155f` for the checkpoint and `5d2b65057a2a9a22e9009d575444cb3659074a163e1386e92d722a6c7e50d213` for the predictor source.
-
-WikiText-2 was introduced by [Merity et al.](https://arxiv.org/abs/1609.07843); its text is from Wikipedia contributors. Substantive AI assistance contributed implementation, experiment execution, audits, analysis, and documentation. The submitter reviewed and is responsible for the final submission.
+This project independently implements ideas credited in `PUBLIC_METHODS.md`; other authors' source files and trained checkpoints are not copied. OpenAI Codex substantially assisted with implementation, experiments and report drafting. The report discloses previous aggregate test-score exposure, repeated development and method limitations. No external dataset, additional pretrained weights, LLM/API inference or answer lookup is used.

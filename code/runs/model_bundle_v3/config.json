@@ -1,0 +1,19 @@
+{
+  "method": "numeric-answer-group-pairwise-subsets",
+  "version": 3,
+  "seed": 7506,
+  "selected": {
+    "mode": "numeric",
+    "alpha": 0.01,
+    "cv_correct": 1740,
+    "cv_n": 2114,
+    "cv_accuracy": 82.30842005676443,
+    "all_folds_converged": true
+  },
+  "validation_correct": 746,
+  "validation_n": 798,
+  "validation_hard_correct": 303,
+  "validation_hard_n": 355,
+  "source_ideas": "../../PUBLIC_METHODS.md",
+  "prediction_entrypoint": "submission.py"
+}

@@ -1,0 +1,17 @@
+{
+  "frozen_utc": "2026-10-25T11:03:16.364104+00:00",
+  "method_selection": "Train-question CV and validation; before v3 test scoring",
+  "prior_exposure": "V1 and V2 aggregate test scores already known; no per-question test error inspection",
+  "assets": {
+    "config.json": "a264bc0e531ecbcfa2abb33ee00af5ef20f6941a2dc1f65c72e743475e8173e2",
+    "ranker.npz": "5c5c0f4a560c1f42acfb27c82abe9dbaacb75090dc8c9c18cf5be9ef33285723"
+  },
+  "source": {
+    "answer_ranker.py": "1ea74a75c783c37053a3c103572ff3b3a9aa5100e3ecbbf35449fc18cce7f909",
+    "features.py": "17917409a5cb2f8ce886865b150c0ae318f9228917dedbaff37806fcdcf96d69",
+    "submission.py": "14444d330f1d5d36894a1aaaf8b8309a2c7069669776e761aa7ffe81a50adfe2",
+    "train_answer_ranker.py": "0df89f4cc1d567515a1ab4f493ee3f1867b7942ed5c8a94151dbe96fdf6313ed",
+    "train_augmented_ranker.py": "8d12a1422323280d07494f9a5eba57455a052d01127651ac46e9bb456e6cde0d",
+    "select_fusion.py": "73848e8e9b8f120af38739464995577f9b7982b2eb8ca2e917468a1df8c387f6"
+  }
+}
