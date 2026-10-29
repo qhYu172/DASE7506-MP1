@@ -1,0 +1,139 @@
+{
+  "selected": {
+    "variant": "arithmetic",
+    "alpha": 0.01,
+    "strength": 0.25,
+    "validation_correct": 750,
+    "converged": true
+  },
+  "experiments": [
+    {
+      "variant": "format",
+      "alpha": 0.01,
+      "strength": 0.25,
+      "validation_correct": 747,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 0.01,
+      "strength": 0.5,
+      "validation_correct": 745,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 0.01,
+      "strength": 1.0,
+      "validation_correct": 745,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 0.1,
+      "strength": 0.25,
+      "validation_correct": 746,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 0.1,
+      "strength": 0.5,
+      "validation_correct": 747,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 0.1,
+      "strength": 1.0,
+      "validation_correct": 745,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 1.0,
+      "strength": 0.25,
+      "validation_correct": 746,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 1.0,
+      "strength": 0.5,
+      "validation_correct": 746,
+      "converged": true
+    },
+    {
+      "variant": "format",
+      "alpha": 1.0,
+      "strength": 1.0,
+      "validation_correct": 746,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 0.25,
+      "validation_correct": 750,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 0.5,
+      "validation_correct": 750,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 1.0,
+      "validation_correct": 749,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 0.25,
+      "validation_correct": 749,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 0.5,
+      "validation_correct": 750,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 1.0,
+      "validation_correct": 750,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 0.25,
+      "validation_correct": 748,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 0.5,
+      "validation_correct": 748,
+      "converged": true
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 1.0,
+      "validation_correct": 749,
+      "converged": true
+    }
+  ],
+  "training_seconds": 6.3599395999999615,
+  "selection": "validation only; references from test not opened"
+}

@@ -1,17 +1,17 @@
 # DASE7506 Mini-project 2: Selecting Reliable LLM Reasoning
 
-**Yu Qinghao — Student ID 3036843599**
+**Yu Qinghao | Student ID 3036843599**
 
-Final method **v3**: numeric-answer-group pairwise ranking with training-only subset augmentation. Official complete-test accuracy: **83.5117773019272% (390/467)**. The supplied data, numeric parser and scorer are unchanged.
+Final method **v11**: answer-group ranking with arithmetic checking and propagation of explicit arithmetic slips. Official complete-test accuracy: **85.01070663811564% (397/467)**. Validation: **751/798**.
 
-- [Report (3 pages)](output/pdf/MP2_report.pdf)
-- [Results, experiment history and exact commands](RESULTS.md)
-- [Public-method sources and independent adaptation disclosure](PUBLIC_METHODS.md)
-- [Frozen checkpoint](code/runs/model_bundle_v3/)
-- [Official test score](code/runs/test-v3-score.json)
-- [Source/checkpoint freeze manifest](code/runs/v3-freeze.json)
+- [Final report (5 pages)](output/pdf/MP2_report.pdf)
+- [Final checkpoint](code/runs/experiment_v11/model.npz)
+- [Official test score](code/runs/test-v11-score.json)
+- [Frozen source and asset hashes](code/runs/experiment_v11/freeze.json)
+- [Final results and evidence index](RESULTS_V11.md)
+- [Reuse disclosure](code/runs/v10-sources.json) and [development notes](code/runs/experiment_v11/NOTES.json)
 
-## Reproduce without retraining
+## Evaluate without retraining
 
 Use Python 3.12. From the repository root:
 
@@ -20,25 +20,30 @@ cd code
 py -3.12 -m pip install -r requirements.txt
 py -3.12 fetch_data.py
 py -3.12 check_data.py
-py -3.12 evaluate_frozen.py --split validation
-py -3.12 evaluate_frozen.py --split test
+py -3.12 evaluate_v11.py
+py -3.12 verify_v11.py
 ```
 
-On Linux/macOS, replace `py -3.12` with your Python 3.12 executable. The evaluation wrapper sets four numerical threads, verifies frozen hashes, and launches the official predictor and independent scorer as fresh processes. Expected test result: **390/467**. The checkpoint is included; no model download or retraining is needed. Final inference assets total **28,205 bytes**. Local fresh-process prediction plus scoring took **1.265 seconds** on an Intel Core i9-14900HX; the reference Xeon determines official runtime eligibility.
+On Linux/macOS replace py -3.12 with your Python 3.12 executable. The fetcher downloads official data at pinned commit bb801f4f2e7629d270df765ab12c333b2dc616bb and validates hashes. Existing data is reused. After setup, evaluation works offline.
 
-The GitHub edition omits the large original data arrays. `fetch_data.py` downloads only the official course data at commit `bb801f4f2e7629d270df765ab12c333b2dc616bb` and verifies every file against the supplied manifest. An existing complete local copy is verified and reused. Data license/attribution files are retained under `code/data/`. After data setup, evaluation works offline.
+The wrapper verifies frozen files and invokes the unchanged official predictor and scorer for validation and test in fresh serial processes with four numerical threads. Expected counts: **751/798** and **397/467**. Prediction entry: code/repair_v11.py. Checkpoint directory: code/runs/experiment_v11/. Only model.npz is loaded for inference (10,166 bytes). Recorded local complete test evaluation: 1.504 seconds on Intel Core i9-14900HX; reference Xeon runtime unmeasured.
 
-## Reproduce training and comparisons
+## Reproduce training
+
+Run in a separate checkout to preserve distributed frozen files:
 
 ```powershell
 cd code
 py -3.12 train_augmented_ranker.py
+py -3.12 verify_anchor_rebuild.py
+py -3.12 train_v5.py
+py -3.12 train_v11.py
 ```
 
-This performs the final three-fold train-question CV search and fits the chosen model using train only. It writes `runs/augmented_ranker/`, leaving the frozen final checkpoint unchanged. Validation is measured for development; test is never opened by this training script. Use `--method answer_ranker.py --checkpoint runs/augmented_ranker` with the official predictor to evaluate the rebuilt checkpoint.
+The first two commands rebuild the v3 anchor and verify its numerical equivalence to the shipped prerequisite. train_v5.py regenerates the train-only subset-pair cache (plus historical PCA comparisons). train_v11.py uses question-fold CV with refitted anchors and corrections, selects the correction, applies the validation retention check, and writes runs/experiment_v11. These training scripts never open test references. Only the official scorer reads test references for evaluation.
 
-The earlier group-softmax comparison is in `train_answer_ranker.py`. Rebuild the historical v1/v2 models with `train.py` then `train_v2.py`, and run `select_fusion.py` for the reported negative fusion comparison. Historical v1/v2 learned assets are included in the full local project ZIP, but need not be included in the GitHub edition; their training code and score records are retained. Exploratory LightGBM trials use optional `requirements-experiments.txt`.
+Earlier scripts and compact experiment records are retained for transparency. RESULTS.md describes historical v3; RESULTS_V11.md describes the current final method. The retained v3 checkpoint is a retraining prerequisite, not the current inference checkpoint. Together v3 and v11 assets total 38,371 bytes.
 
-## Provenance
+## Attribution and disclosure
 
-This project independently implements ideas credited in `PUBLIC_METHODS.md`; other authors' source files and trained checkpoints are not copied. OpenAI Codex substantially assisted with implementation, experiments and report drafting. The report discloses previous aggregate test-score exposure, repeated development and method limitations. No external dataset, additional pretrained weights, LLM/API inference or answer lookup is used.
+Conceptual reuse is recorded in PUBLIC_METHODS.md and code/runs/v10-sources.json. No third-party source file, checkpoint or prediction file was copied. OpenAI Codex substantially assisted research, implementation, experiments, verification, report drafting and submission preparation. Previous aggregate test scores and public reported scores were known; the report discloses repeated development and does not claim an untouched blind test. No external dataset, additional pretrained weight, LLM/API inference or answer lookup is used.

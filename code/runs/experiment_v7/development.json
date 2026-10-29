@@ -1,0 +1,138 @@
+{
+  "selected": {
+    "loss": "squared_hinge",
+    "alpha": 0.1,
+    "validation_correct": 747,
+    "converged": true
+  },
+  "experiments": [
+    {
+      "loss": "logistic",
+      "alpha": 0.0003,
+      "validation_correct": 731,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.001,
+      "validation_correct": 739,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.003,
+      "validation_correct": 741,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.01,
+      "validation_correct": 746,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.03,
+      "validation_correct": 744,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.1,
+      "validation_correct": 742,
+      "converged": true
+    },
+    {
+      "loss": "logistic",
+      "alpha": 0.3,
+      "validation_correct": 738,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.0003,
+      "validation_correct": 724,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.001,
+      "validation_correct": 726,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.003,
+      "validation_correct": 736,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.01,
+      "validation_correct": 741,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.03,
+      "validation_correct": 743,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.1,
+      "validation_correct": 747,
+      "converged": true
+    },
+    {
+      "loss": "squared_hinge",
+      "alpha": 0.3,
+      "validation_correct": 745,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.0003,
+      "validation_correct": 722,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.001,
+      "validation_correct": 729,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.003,
+      "validation_correct": 736,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.01,
+      "validation_correct": 740,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.03,
+      "validation_correct": 744,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.1,
+      "validation_correct": 747,
+      "converged": true
+    },
+    {
+      "loss": "huber_hinge",
+      "alpha": 0.3,
+      "validation_correct": 745,
+      "converged": true
+    }
+  ],
+  "training_seconds": 20.907980799999905,
+  "selection": "validation only"
+}

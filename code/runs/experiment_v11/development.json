@@ -1,0 +1,357 @@
+{
+  "selected": {
+    "variant": "combined",
+    "alpha": 0.1,
+    "strength": 1.0,
+    "cv_correct": 1764,
+    "cv_n": 2114,
+    "fold_correct": [
+      591,
+      594,
+      579
+    ]
+  },
+  "experiments": [
+    {
+      "variant": "baseline",
+      "alpha": 0.0,
+      "strength": 0.0,
+      "cv_correct": 1740,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        584,
+        568
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 0.25,
+      "cv_correct": 1748,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        587,
+        573
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 0.5,
+      "cv_correct": 1752,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        588,
+        574
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.01,
+      "strength": 1.0,
+      "cv_correct": 1758,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        589,
+        579
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 0.25,
+      "cv_correct": 1746,
+      "cv_n": 2114,
+      "fold_correct": [
+        589,
+        586,
+        571
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 0.5,
+      "cv_correct": 1754,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        588,
+        575
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 0.1,
+      "strength": 1.0,
+      "cv_correct": 1759,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        591,
+        578
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 0.25,
+      "cv_correct": 1741,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        583,
+        570
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 0.5,
+      "cv_correct": 1743,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        583,
+        572
+      ]
+    },
+    {
+      "variant": "arithmetic",
+      "alpha": 1.0,
+      "strength": 1.0,
+      "cv_correct": 1752,
+      "cv_n": 2114,
+      "fold_correct": [
+        593,
+        586,
+        573
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.01,
+      "strength": 0.25,
+      "cv_correct": 1746,
+      "cv_n": 2114,
+      "fold_correct": [
+        589,
+        586,
+        571
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.01,
+      "strength": 0.5,
+      "cv_correct": 1750,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        586,
+        573
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.01,
+      "strength": 1.0,
+      "cv_correct": 1750,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        587,
+        573
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.1,
+      "strength": 0.25,
+      "cv_correct": 1744,
+      "cv_n": 2114,
+      "fold_correct": [
+        589,
+        586,
+        569
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.1,
+      "strength": 0.5,
+      "cv_correct": 1746,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        587,
+        569
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 0.1,
+      "strength": 1.0,
+      "cv_correct": 1750,
+      "cv_n": 2114,
+      "fold_correct": [
+        592,
+        586,
+        572
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 1.0,
+      "strength": 0.25,
+      "cv_correct": 1742,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        585,
+        569
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 1.0,
+      "strength": 0.5,
+      "cv_correct": 1743,
+      "cv_n": 2114,
+      "fold_correct": [
+        588,
+        585,
+        570
+      ]
+    },
+    {
+      "variant": "repair",
+      "alpha": 1.0,
+      "strength": 1.0,
+      "cv_correct": 1748,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        587,
+        570
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.01,
+      "strength": 0.25,
+      "cv_correct": 1748,
+      "cv_n": 2114,
+      "fold_correct": [
+        587,
+        588,
+        573
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.01,
+      "strength": 0.5,
+      "cv_correct": 1754,
+      "cv_n": 2114,
+      "fold_correct": [
+        590,
+        589,
+        575
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.01,
+      "strength": 1.0,
+      "cv_correct": 1752,
+      "cv_n": 2114,
+      "fold_correct": [
+        587,
+        590,
+        575
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.1,
+      "strength": 0.25,
+      "cv_correct": 1749,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        587,
+        571
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.1,
+      "strength": 0.5,
+      "cv_correct": 1757,
+      "cv_n": 2114,
+      "fold_correct": [
+        592,
+        591,
+        574
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 0.1,
+      "strength": 1.0,
+      "cv_correct": 1764,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        594,
+        579
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 1.0,
+      "strength": 0.25,
+      "cv_correct": 1742,
+      "cv_n": 2114,
+      "fold_correct": [
+        587,
+        585,
+        570
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 1.0,
+      "strength": 0.5,
+      "cv_correct": 1749,
+      "cv_n": 2114,
+      "fold_correct": [
+        591,
+        586,
+        572
+      ]
+    },
+    {
+      "variant": "combined",
+      "alpha": 1.0,
+      "strength": 1.0,
+      "cv_correct": 1753,
+      "cv_n": 2114,
+      "fold_correct": [
+        592,
+        588,
+        573
+      ]
+    }
+  ],
+  "validation_correct": 751,
+  "validation_n": 798,
+  "training_seconds": 27.591734299999644,
+  "selection": "3-fold train-question CV; all fold anchors/scalers/residuals refitted; validation retention check >=750",
+  "eligible_for_test": true
+}

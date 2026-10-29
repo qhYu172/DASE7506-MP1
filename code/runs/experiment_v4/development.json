@@ -1,0 +1,263 @@
+{
+  "selected": {
+    "hidden": 32,
+    "alpha": 1.0,
+    "weight": 0.0,
+    "validation_correct": 746,
+    "hard_correct": 303,
+    "iterations": [
+      100,
+      100,
+      100
+    ]
+  },
+  "experiments": [
+    {
+      "hidden": 32,
+      "alpha": 1.0,
+      "weight": 0.0,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "hidden": 32,
+      "alpha": 1.0,
+      "weight": 0.25,
+      "validation_correct": 744,
+      "hard_correct": 301,
+      "iterations": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "hidden": 32,
+      "alpha": 1.0,
+      "weight": 0.5,
+      "validation_correct": 741,
+      "hard_correct": 298,
+      "iterations": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "hidden": 32,
+      "alpha": 1.0,
+      "weight": 0.75,
+      "validation_correct": 735,
+      "hard_correct": 292,
+      "iterations": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "hidden": 32,
+      "alpha": 1.0,
+      "weight": 1.0,
+      "validation_correct": 730,
+      "hard_correct": 287,
+      "iterations": [
+        100,
+        100,
+        100
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 1.0,
+      "weight": 0.0,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        100,
+        100,
+        98
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 1.0,
+      "weight": 0.25,
+      "validation_correct": 744,
+      "hard_correct": 301,
+      "iterations": [
+        100,
+        100,
+        98
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 1.0,
+      "weight": 0.5,
+      "validation_correct": 739,
+      "hard_correct": 296,
+      "iterations": [
+        100,
+        100,
+        98
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 1.0,
+      "weight": 0.75,
+      "validation_correct": 734,
+      "hard_correct": 291,
+      "iterations": [
+        100,
+        100,
+        98
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 1.0,
+      "weight": 1.0,
+      "validation_correct": 733,
+      "hard_correct": 290,
+      "iterations": [
+        100,
+        100,
+        98
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 10.0,
+      "weight": 0.0,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        79,
+        74,
+        47
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 10.0,
+      "weight": 0.25,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        79,
+        74,
+        47
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 10.0,
+      "weight": 0.5,
+      "validation_correct": 743,
+      "hard_correct": 300,
+      "iterations": [
+        79,
+        74,
+        47
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 10.0,
+      "weight": 0.75,
+      "validation_correct": 745,
+      "hard_correct": 302,
+      "iterations": [
+        79,
+        74,
+        47
+      ]
+    },
+    {
+      "hidden": 64,
+      "alpha": 10.0,
+      "weight": 1.0,
+      "validation_correct": 745,
+      "hard_correct": 302,
+      "iterations": [
+        79,
+        74,
+        47
+      ]
+    },
+    {
+      "hidden": 128,
+      "alpha": 10.0,
+      "weight": 0.0,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        86,
+        65,
+        99
+      ]
+    },
+    {
+      "hidden": 128,
+      "alpha": 10.0,
+      "weight": 0.25,
+      "validation_correct": 746,
+      "hard_correct": 303,
+      "iterations": [
+        86,
+        65,
+        99
+      ]
+    },
+    {
+      "hidden": 128,
+      "alpha": 10.0,
+      "weight": 0.5,
+      "validation_correct": 744,
+      "hard_correct": 301,
+      "iterations": [
+        86,
+        65,
+        99
+      ]
+    },
+    {
+      "hidden": 128,
+      "alpha": 10.0,
+      "weight": 0.75,
+      "validation_correct": 744,
+      "hard_correct": 301,
+      "iterations": [
+        86,
+        65,
+        99
+      ]
+    },
+    {
+      "hidden": 128,
+      "alpha": 10.0,
+      "weight": 1.0,
+      "validation_correct": 744,
+      "hard_correct": 301,
+      "iterations": [
+        86,
+        65,
+        99
+      ]
+    }
+  ],
+  "training_seconds": 164.56640599999992,
+  "seeds": [
+    7506,
+    7507,
+    7508
+  ],
+  "selection": "validation only; no test data accessed"
+}

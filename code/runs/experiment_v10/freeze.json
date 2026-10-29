@@ -1,0 +1,10 @@
+{
+  "frozen_at": "2026-10-29T07:14:46.408424+00:00",
+  "sha256": {
+    "arithmetic_v10.py": "1d64dc141fae03f45831ea191ea96ddc2baa06ca3511341ef1782add531474a4",
+    "train_v10.py": "31688171533734d844d122873954763c84dc82c79a6ee9a8b53f544bad19cf40",
+    "answer_ranker.py": "1ea74a75c783c37053a3c103572ff3b3a9aa5100e3ecbbf35449fc18cce7f909",
+    "features.py": "17917409a5cb2f8ce886865b150c0ae318f9228917dedbaff37806fcdcf96d69",
+    "runs\\experiment_v10\\model.npz": "6f1809e06b86548c49c04d22b473f18ec1d25ad0e858a1500b047c32e876cbc4"
+  }
+}

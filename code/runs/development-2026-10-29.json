@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-29",
+  "scope": "local development and official evaluation only; no report or remote submission changes",
+  "baseline": {
+    "version": "v3",
+    "validation_correct": 746,
+    "validation_n": 798,
+    "test_correct": 390,
+    "test_n": 467,
+    "test_accuracy": 83.5117773019272
+  },
+  "experiments": [
+    {
+      "experiment": "experiment_v4",
+      "selected": {
+        "hidden": 32,
+        "alpha": 1.0,
+        "weight": 0.0,
+        "validation_correct": 746,
+        "hard_correct": 303,
+        "iterations": [
+          100,
+          100,
+          100
+        ]
+      },
+      "settings_evaluated": 20,
+      "training_seconds": 164.56640599999992
+    },
+    {
+      "experiment": "experiment_v5",
+      "selected": {
+        "dim": 1024,
+        "whitening": 0.0,
+        "alpha": 0.01,
+        "validation_correct": 745,
+        "converged": true
+      },
+      "settings_evaluated": 54,
+      "training_seconds": 26.011715500000037
+    },
+    {
+      "experiment": "experiment_v6",
+      "selected": {
+        "hidden": 128,
+        "reg": 0.03,
+        "epoch": 80,
+        "weight": 0.5,
+        "validation_correct": 752
+      },
+      "settings_evaluated": 36,
+      "training_seconds": 1317.4824469999999
+    },
+    {
+      "experiment": "experiment_v7",
+      "selected": {
+        "loss": "squared_hinge",
+        "alpha": 0.1,
+        "validation_correct": 747,
+        "converged": true
+      },
+      "settings_evaluated": 21,
+      "training_seconds": 20.907980799999905
+    },
+    {
+      "experiment": "experiment_v8",
+      "selected": {
+        "leaves": 31,
+        "l2": 50,
+        "iterations": 300,
+        "weight": 0.5,
+        "validation_correct": 749
+      },
+      "settings_evaluated": 64,
+      "training_seconds": 76.93914140000015
+    },
+    {
+      "experiment": "experiment_v8_fusion",
+      "selected": {
+        "validation_correct": 749
+      },
+      "settings_evaluated": 25,
+      "training_seconds": null
+    }
+  ],
+  "selected_before_test": {
+    "tree_weight": 0.0,
+    "neural_weight": 0.5,
+    "validation_correct": 752,
+    "validation_hard_correct": 309
+  },
+  "official_test": {
+    "protocol": "dase7506-mp2-open-hard-verifier-v5",
+    "split": "test",
+    "correct": 384,
+    "n": 467,
+    "accuracy": 82.22698072805139,
+    "scoring_seconds": 0.022757700000056502
+  },
+  "resources": {
+    "fresh_process_total_seconds": 1.2272072000000662,
+    "inference_asset_bytes": 3450824,
+    "threads": 4,
+    "hardware": "Intel Core i9-14900HX (local; reference Xeon not measured)"
+  },
+  "target_achieved": false,
+  "interpretation": "Validation improvement did not generalize. Test labels were accessed only by the official scorer after freezing. No per-question test errors were inspected. Prior aggregate test results are already known, so this is not an untouched blind-test study.",
+  "remote_changes": false,
+  "old_submission": "https://github.com/xudongwu-0/xudongwu-0.github.io/issues/253"
+}

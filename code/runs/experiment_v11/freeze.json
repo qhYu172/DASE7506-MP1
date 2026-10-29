@@ -1,0 +1,11 @@
+{
+  "frozen_at": "2026-10-29T07:22:53.892308+00:00",
+  "sha256": {
+    "repair_v11.py": "ef9b4bbc61ecf6a437b040cfb28cc03ee85c6b8ed3a0210f79c67b96723c8945",
+    "train_v11.py": "83321901e3f9b46c5b9ee01db254f79b5b42266dfd8c98c3857e76102826b60d",
+    "arithmetic_v10.py": "1d64dc141fae03f45831ea191ea96ddc2baa06ca3511341ef1782add531474a4",
+    "answer_ranker.py": "1ea74a75c783c37053a3c103572ff3b3a9aa5100e3ecbbf35449fc18cce7f909",
+    "features.py": "17917409a5cb2f8ce886865b150c0ae318f9228917dedbaff37806fcdcf96d69",
+    "runs\\experiment_v11\\model.npz": "ee05b5cb3db96439adeeed6a783dbe802e1ee468811facedf3942ea20f4b795c"
+  }
+}

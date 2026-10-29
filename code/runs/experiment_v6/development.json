@@ -1,0 +1,270 @@
+{
+  "selected": {
+    "hidden": 128,
+    "reg": 0.03,
+    "epoch": 80,
+    "weight": 0.5,
+    "validation_correct": 752
+  },
+  "experiments": [
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 0.25,
+      "validation_correct": 744
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 0.5,
+      "validation_correct": 743
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 1.0,
+      "validation_correct": 733
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 0.25,
+      "validation_correct": 746
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 0.5,
+      "validation_correct": 740
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 1.0,
+      "validation_correct": 735
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 0.25,
+      "validation_correct": 745
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 0.5,
+      "validation_correct": 739
+    },
+    {
+      "hidden": 32,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 1.0,
+      "validation_correct": 730
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 0.25,
+      "validation_correct": 743
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 0.5,
+      "validation_correct": 744
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 20,
+      "weight": 1.0,
+      "validation_correct": 739
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 0.5,
+      "validation_correct": 744
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 40,
+      "weight": 1.0,
+      "validation_correct": 736
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 0.25,
+      "validation_correct": 745
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 0.5,
+      "validation_correct": 740
+    },
+    {
+      "hidden": 64,
+      "reg": 0.003,
+      "epoch": 80,
+      "weight": 1.0,
+      "validation_correct": 725
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 0.5,
+      "validation_correct": 749
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 1.0,
+      "validation_correct": 748
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 0.5,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 1.0,
+      "validation_correct": 743
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 0.25,
+      "validation_correct": 746
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 0.5,
+      "validation_correct": 745
+    },
+    {
+      "hidden": 64,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 1.0,
+      "validation_correct": 744
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 0.5,
+      "validation_correct": 745
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 20,
+      "weight": 1.0,
+      "validation_correct": 746
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 0.25,
+      "validation_correct": 746
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 0.5,
+      "validation_correct": 748
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 40,
+      "weight": 1.0,
+      "validation_correct": 747
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 0.25,
+      "validation_correct": 751
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 0.5,
+      "validation_correct": 752
+    },
+    {
+      "hidden": 128,
+      "reg": 0.03,
+      "epoch": 80,
+      "weight": 1.0,
+      "validation_correct": 748
+    }
+  ],
+  "training_seconds": 1317.4824469999999,
+  "selection": "validation only; test not accessed",
+  "seeds": [
+    7506,
+    7507,
+    7508
+  ]
+}

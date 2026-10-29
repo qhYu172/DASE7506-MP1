@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-29",
+  "sources": [
+    {
+      "url": "https://github.com/CaspianW/dase7506-mp2",
+      "commit": "6709b9ff3cfaea1fed0a4f897f6796358ccfcd02",
+      "files_read": ["README.md", "src/arithmetic_features.py", "src/submission.py"],
+      "arithmetic_file_git_blob": "a558483e0bc4de4fc4ec96adc3cc24d468f46c13",
+      "ideas_used": "Bounded exact-rational equation checking; unsupported expressions treated as unavailable; train a small arithmetic residual on top of a frozen answer-group scorer."
+    },
+    {"url": "https://github.com/Lyan9145/DASE7506-MP2", "files_read": ["README.md"], "ideas_considered": "Cross-candidate arithmetic evidence; DeepSets. No source or checkpoint incorporated."},
+    {"url": "https://github.com/vectorBH6/DASE7506-MP2", "files_read": ["README.md"], "ideas_considered": "Group context, linear/MLP probability ensemble. No source or checkpoint incorporated."}
+  ],
+  "implementation": "arithmetic_v10.py and train_v10.py independently written after studying these sources; substantive conceptual reuse is explicitly acknowledged. No third-party checkpoints, predictions or datasets were used.",
+  "changes_from_conceptual_baseline": "Attach correction to our existing 1112-feature v3 scorer; use 16 candidate descriptors pooled by mean/min/max (48 dimensions); count recomputed left-side results agreeing with own versus competing final answers; compare a format-only control; select residual regularization and strength on validation.",
+  "ai_assistance": "OpenAI Codex performed research, implementation, experiment execution and record keeping.",
+  "scope": "Local experiments only. Formal report, remote repository and submission issue unchanged. Public reported source scores were read; this is not an untouched blind-test study."
+}

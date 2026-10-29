@@ -1,0 +1,133 @@
+{
+  "selected": {
+    "validation_correct": 749
+  },
+  "experiments": [
+    {
+      "margin_weight": 0.0,
+      "tree_weight": 0.0,
+      "validation_correct": 746
+    },
+    {
+      "margin_weight": 0.0,
+      "tree_weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.0,
+      "tree_weight": 0.5,
+      "validation_correct": 749
+    },
+    {
+      "margin_weight": 0.0,
+      "tree_weight": 0.75,
+      "validation_correct": 749
+    },
+    {
+      "margin_weight": 0.0,
+      "tree_weight": 1.0,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.25,
+      "tree_weight": 0.0,
+      "validation_correct": 746
+    },
+    {
+      "margin_weight": 0.25,
+      "tree_weight": 0.25,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.25,
+      "tree_weight": 0.5,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.25,
+      "tree_weight": 0.75,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.25,
+      "tree_weight": 1.0,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.5,
+      "tree_weight": 0.0,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.5,
+      "tree_weight": 0.25,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.5,
+      "tree_weight": 0.5,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.5,
+      "tree_weight": 0.75,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.5,
+      "tree_weight": 1.0,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 0.75,
+      "tree_weight": 0.0,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.75,
+      "tree_weight": 0.25,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.75,
+      "tree_weight": 0.5,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.75,
+      "tree_weight": 0.75,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 0.75,
+      "tree_weight": 1.0,
+      "validation_correct": 746
+    },
+    {
+      "margin_weight": 1.0,
+      "tree_weight": 0.0,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 1.0,
+      "tree_weight": 0.25,
+      "validation_correct": 748
+    },
+    {
+      "margin_weight": 1.0,
+      "tree_weight": 0.5,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 1.0,
+      "tree_weight": 0.75,
+      "validation_correct": 747
+    },
+    {
+      "margin_weight": 1.0,
+      "tree_weight": 1.0,
+      "validation_correct": 746
+    }
+  ],
+  "selection": "validation only; spread normalization fitted on training"
+}

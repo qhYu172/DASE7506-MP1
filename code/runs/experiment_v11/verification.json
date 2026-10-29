@@ -1,0 +1,6 @@
+{
+  "synthetic_arithmetic": "passed",
+  "candidate_permutation_64_validation_inputs": "passed",
+  "batch_invariance_64_validation_inputs": "passed",
+  "reference_answers_used": false
+}

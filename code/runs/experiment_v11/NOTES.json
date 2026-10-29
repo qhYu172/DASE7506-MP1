@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-29",
+  "scope": "Local experimental verification only; no report, GitHub upload, new issue or withdrawal.",
+  "conceptual_provenance": "Extends arithmetic_v10; see runs/v10-sources.json. Sequential arithmetic repair and cross-candidate evidence were discussed in the previously consulted Lyan9145 README. Implementation here is independent; no third-party weights, code files or predictions copied.",
+  "change": "Propagate earlier explicitly inconsistent numeric results into later numeric expressions; treat conflicting replacements as ambiguous; pool repair evidence and cross-candidate support by numeric answer group.",
+  "selection": "Three train-question folds refit the base pairwise ranker, feature scalers and correction. CV chooses variant, regularization and strength. Validation retention threshold was declared in train_v11.py before test scoring. Frozen model evaluated once on test.",
+  "cv_baseline_correct": 1740,
+  "cv_selected_correct": 1764,
+  "cv_questions": 2114,
+  "validation_correct": 751,
+  "validation_questions": 798,
+  "test_correct": 397,
+  "test_questions": 467,
+  "test_accuracy": 85.01070663811564,
+  "limitations": "A repaired number can have a different semantic role later; features are probabilistic evidence rather than a proof. Earlier aggregate test scores are known; no claim of an untouched independent test. No per-question test errors were inspected.",
+  "ai_assistance": "Substantive OpenAI Codex assistance in design, implementation, testing and execution."
+}
